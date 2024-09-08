@@ -22,18 +22,22 @@ void gCanvas::setup() {
 	setupGoal();
 	setupBall();
 	setupMaphitbox();
+	setupPuds();
 }
 void gCanvas::update() {
 	updateBallPosition();
 	updateHitAnimating();
+	updatePudAnimating();
 }
 
 void gCanvas::draw() {
 	//logo.draw((getWidth() - logo.getWidth()) / 2, (getHeight() - logo.getHeight()) / 2);
 	drawMap();
 	drawGoal();
-	drawBall();
+	drawPuds();
 	drawHit();
+	drawBall();
+	//gDrawRectangle(pudleft.x, pudleft.y + 10, pudleft.w, pudleft.h - 20, false);
 	//gDrawRectangle(gamelinelimitx[0], gamelinelimity[0], gamelinelimitx[1], gamelinelimity[1], true);
 }
 
@@ -42,19 +46,25 @@ void gCanvas::keyPressed(int key) {
 	if (key == 82) {
 	        resetBall();
 	    }
-	    if (key == 32) {
-	        if (ismoving) {
-	            savedvelocityx = ball.velocityx;
-	            savedvelocityy = ball.velocityy;
-	            ball.velocityx = 0;
-	            ball.velocityy = 0;
-	            ismoving = false;
-	        } else {
-	            ball.velocityx = savedvelocityx;
-	            ball.velocityy = savedvelocityy;
-	            ismoving = true;
-	        }
-	    }
+    if (key == 32) {
+        if (ismoving) {
+
+            savedvelocityx = ball.velocityx;
+            savedvelocityy = ball.velocityy;
+            savedballframe = ballcurrentframe;
+            savedballframetimer = ballframetimer;
+            ball.velocityx = 0;
+            ball.velocityy = 0;
+            ismoving = false;
+        } else {
+
+            ball.velocityx = savedvelocityx;
+            ball.velocityy = savedvelocityy;
+            ballcurrentframe = savedballframe;
+            ballframetimer = savedballframetimer;
+            ismoving = true;
+        }
+    }
 }
 void gCanvas::keyReleased(int key) {
 //	gLogi("gCanvas") << "keyReleased:" << key;
@@ -174,9 +184,6 @@ void gCanvas::setupBall() {
 
 	ismoving = false;
 	ishitanimating = false;
-
-    lastvelocityx = ball.velocityx;
-    lastvelocityy = ball.velocityy;
 	ball.radius = ball.h / 2;
 	ballcurrentframe = 0;
 	ballframetimer = 0.0f;
@@ -193,6 +200,24 @@ void gCanvas::setupMaphitbox() {
 
 	goalystart = 195;
 	goalyend = 520;
+}
+void gCanvas::setupPuds() {
+	pudleftimage.loadImage("futbolassets/pud_left.png");
+	pudrightimage.loadImage("futbolassets/pud_right.png");
+
+	pudleft.w = pudleftimage.getWidth() / 5;
+	pudleft.h = pudleftimage.getHeight();
+	pudleft.x = 270;
+	pudleft.y = (getHeight() - pudleft.h) / 2;
+	pudleft.velocityy = 0;
+	pudanimationactiveleft = false;
+
+	pudright.w = pudrightimage.getWidth() / 5;
+	pudright.h = pudrightimage.getHeight();
+	pudright.x = 1005 - pudright.w;
+	pudright.y = (getHeight() - pudright.h) / 2;
+	pudright.velocityy = 0;
+	pudanimationactiveright = false;
 }
 
 void gCanvas::drawMap() {
@@ -221,6 +246,12 @@ void gCanvas::drawHit() {
 		ballhit.drawSub(hitanimx - hitw / 2, hitanimy - hith / 2, hitframex, 0, hitw, hith);
 	}
 }
+void gCanvas::drawPuds() {
+        pudleftframex = pudanimframeleft * pudleft.w;
+        pudleftimage.drawSub(pudleft.x, pudleft.y, pudleftframex, 0, pudleft.w, pudleft.h);
+        pudrightframex = pudanimframeright * pudright.w;
+        pudrightimage.drawSub(pudright.x, pudright.y, pudrightframex, 0, pudright.w, pudright.h);
+}
 void gCanvas::drawGoal() {
 	goal[PLAYER_LEFT].draw(goalx[PLAYER_LEFT], goaly[PLAYER_LEFT], goalw[PLAYER_LEFT], goalh[PLAYER_LEFT]);
 	goal[PLAYER_RIGHT].draw(goalx[PLAYER_RIGHT], goaly[PLAYER_RIGHT], goalw[PLAYER_RIGHT], goalh[PLAYER_RIGHT]);
@@ -231,48 +262,54 @@ void gCanvas::updateBallPosition() {
 	 checkGoal();
 	 if(ismoving){
 
+		    if (checkPudCollision(ball, pudleft)) {
+		        if (!pudanimationactiveleft) {
+		            startPudAnimation(LEFT);
+		        }
+		        reflectBall(ball, pudleft);
+		    }
 
-	 if(ball.y > ustdirek && ball.y < altdirek){
-		 for (int i = 0; i < 2; i++) {
-				         if (checkPostCollision(ball, goalpostleft[i])) {
-				             reflectBall(ball, goalpostleft[i]);
-				             startHitAnimation(ball.x, ball.y);
-				         }
-				         if (checkPostCollision(ball, goalpostright[i])) {
-				                 reflectBall(ball, goalpostright[i]);
-				                 startHitAnimation(ball.x, ball.y);
-				         }
-				     }
-	 } else {
-		 if ((ball.x - ball.radius <= gamelinelimitx[0] || ball.x + ball.radius >= gamelinelimitx[1]) && (ball.y + ball.radius >= goalyend || ball.y - ball.radius <= goalystart)
-		 		     	 ){
-		 		            ball.velocityx *= -1;
-		 		           startHitAnimation(ball.x, ball.y);
+		    if (checkPudCollision(ball, pudright)) {
+		        if (!pudanimationactiveright) {
+		            startPudAnimation(RIGHT);
 
-		 		        }
-		 		     if (ball.y - ball.radius <= gamelinelimity[0] || ball.y + ball.radius >= gamelinelimity[1] ) {
+		        }
+		        reflectBall(ball, pudright);
+		    }
 
-		 		            ball.velocityy *= -1;
-		 		           startHitAnimation(ball.x, ball.y);
-		 		     }
-	 }
+		 if(ball.y > ustdirek && ball.y < altdirek){
+			 for (int i = 0; i < 2; i++) {
+				if (checkPostCollision(ball, goalpostleft[i])) {
+					reflectBall(ball, goalpostleft[i]);
+				}
+				if (checkPostCollision(ball, goalpostright[i])) {
+					reflectBall(ball, goalpostright[i]);
+			    }
+			}
+		 } else {
+			 if((ball.x - ball.radius <= gamelinelimitx[0] || ball.x + ball.radius >= gamelinelimitx[1]) && (ball.y + ball.radius >= goalyend || ball.y - ball.radius <= goalystart)){
+				ball.velocityx *= -1;
+				startHitAnimation(ball.x, ball.y);
+			 }
+			 if (ball.y - ball.radius <= gamelinelimity[0] || ball.y + ball.radius >= gamelinelimity[1] ) {
+				ball.velocityy *= -1;
+				startHitAnimation(ball.x, ball.y);
+			 }
+		 }
 
-    ball.x += ball.velocityx;
-    ball.y += ball.velocityy;
+		ball.x += ball.velocityx;
+		ball.y += ball.velocityy;
 
-    ballframespeed = getBallSpeed() * 0.05f;
-    ballframetimer += ballframespeed;
-    if(ballframetimer >= 1.0f){
-    	ballcurrentframe = (ballcurrentframe + 1) % 6;
-    	ballframetimer = 0.0f; // timeri sifirla
-    }
+		ballframespeed = getBallSpeed() * 0.05f;
+		ballframetimer += ballframespeed;
+		if(ballframetimer >= 1.0f){
+			ballcurrentframe = (ballcurrentframe + 1) % 6;
+			ballframetimer = 0.0f; // timeri sifirla
+		}
 	}
+
 }
 void gCanvas::updateHitAnimating() {
-
-	    lastvelocityx = ball.velocityx;
-	    lastvelocityy = ball.velocityy;
-
 	    if (ishitanimating) {
 	           hitframetimer += hitframespeed;
 	           if (hitframetimer >= 0.1f) {
@@ -284,6 +321,31 @@ void gCanvas::updateHitAnimating() {
 	           }
 	       }
 }
+void gCanvas::updatePudAnimating() {
+
+    if (pudanimationactiveleft) {
+        pudanimtimerleft += pudanimframespeed;
+        if (pudanimtimerleft >= 0.1f) {
+            pudanimframeleft = (pudanimframeleft + 1) % 5;
+            pudanimtimerleft = 0.0f;
+        }
+        if (pudanimframeleft == 0) {
+            pudanimationactiveleft = false;
+        }
+    }
+
+    if (pudanimationactiveright) {
+        pudanimtimerright += pudanimframespeed;
+        if (pudanimtimerright >= 0.1f) {
+            pudanimframeright = (pudanimframeright + 1) % 5;
+            pudanimtimerright = 0.0f;
+        }
+        if (pudanimframeright == 0) {
+            pudanimationactiveright = false;
+        }
+    }
+}
+
 float gCanvas::getBallSpeed() {
 	return sqrt(ball.velocityx * ball.velocityx + ball.velocityy * ball.velocityy);
 }
@@ -316,7 +378,9 @@ bool gCanvas::checkPostCollision(Ball& ball, Post& post) {
     return distance < (ball.radius + post.radius);
 }
 
+
 void gCanvas::reflectBall(Ball& ball, Post& post) {
+	startHitAnimation(ball.x, ball.y);
 	dx = ball.x - post.x;
 	dy = ball.y - post.y;
 
@@ -337,6 +401,43 @@ void gCanvas::startHitAnimation(float x, float y) {
 	hitanimx = x;
 	hitanimy = y;
 }
+void gCanvas::startPudAnimation(int type) {
+	if (type == LEFT) {
+	        pudanimationactiveleft = true;
+	        pudanimationactiveright = false;
+	        pudanimframeleft = 0;
+	        pudanimtimerleft = 0.0f;
+	    } else if (type == RIGHT) {
+	        pudanimationactiveright = true;
+	        pudanimationactiveleft = false;
+	        pudanimframeright = 0;
+	        pudanimtimerright = 0.0f;
+	    }
+
+}
+bool gCanvas::checkPudCollision(Ball &ball, Pud &pud) {
+	return (ball.x + ball.radius >= pud.x && ball.x - ball.radius <= pud.x + pud.w &&
+	                ball.y + ball.radius >= pud.y && ball.y - ball.radius <= pud.y + pud.h);
+}
+void gCanvas::reflectBall(Ball &ball, Pud &pud) {
+	closestSide(ball, pud);
+
+	if(mindistance == disttop || mindistance == distbot){
+		ball.velocityy *= -1;
+	}
+	if(mindistance == distleft || mindistance == distright){
+		ball.velocityx *= -1;
+	}
+
+}void gCanvas::closestSide(Ball &ball, Pud &pud) {
+	disttop = abs(ball.y + ball.h - pud.y);
+	distbot = abs(ball.y - ball.h - pud.y + pud.h);
+	distleft = abs(ball.x + ball.w - pud.x);
+	distright = abs(ball.x - ball.w - pud.x + pud.w);
+	mindistance = std::min({disttop, distbot, distleft, distright});
+
+
+}
 
 float gCanvas::calculateAngle(int velocityx, int velocityy) {
 	 if (velocityx == 0 && velocityy == 0) {
@@ -348,3 +449,5 @@ float gCanvas::calculateAngle(int velocityx, int velocityy) {
 
 	    return fmod(angledegrees + 360.0f, 360.0f);
 }
+
+
