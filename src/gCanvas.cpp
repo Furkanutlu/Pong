@@ -218,6 +218,7 @@ void gCanvas::setupPuds() {
 	pudright.y = (getHeight() - pudright.h) / 2;
 	pudright.velocityy = 0;
 	pudanimationactiveright = false;
+
 }
 
 void gCanvas::drawMap() {
@@ -416,25 +417,33 @@ void gCanvas::startPudAnimation(int type) {
 
 }
 bool gCanvas::checkPudCollision(Ball &ball, Pud &pud) {
-	return (ball.x + ball.radius >= pud.x && ball.x - ball.radius <= pud.x + pud.w &&
+	return (ball.x >= pud.x && ball.x <= pud.x + pud.w &&
 	                ball.y + ball.radius >= pud.y && ball.y - ball.radius <= pud.y + pud.h);
 }
 void gCanvas::reflectBall(Ball &ball, Pud &pud) {
 	closestSide(ball, pud);
 
-	if(mindistance == disttop || mindistance == distbot){
-		ball.velocityy *= -1;
-	}
-	if(mindistance == distleft || mindistance == distright){
-		ball.velocityx *= -1;
-	}
+	 if (mindistance == disttop || mindistance == distbot) {
+	        ball.velocityy *= -1;
 
-}void gCanvas::closestSide(Ball &ball, Pud &pud) {
-	disttop = abs(ball.y + ball.h - pud.y);
-	distbot = abs(ball.y - ball.h - pud.y + pud.h);
-	distleft = abs(ball.x + ball.w - pud.x);
-	distright = abs(ball.x - ball.w - pud.x + pud.w);
-	mindistance = std::min({disttop, distbot, distleft, distright});
+	        ball.y = (mindistance == disttop) ? pud.y - ball.radius : pud.y + pud.h + ball.radius;
+	    }
+
+	    if (mindistance == distleft || mindistance == distright) {
+	        ball.velocityx *= -1;
+
+	        ball.x = (mindistance == distleft) ? pud.x - ball.radius : pud.x + pud.w + ball.radius;
+	    }
+
+}
+void gCanvas::closestSide(Ball &ball, Pud &pud) {
+
+    disttop = abs(ball.y + ball.radius - pud.y);
+    distbot = abs((ball.y - ball.radius) - pud.y - pud.h);
+    distleft = abs(ball.x - pud.x);
+    distright = abs(ball.x - (pud.x + pud.w));
+
+    mindistance = std::min({disttop, distbot, distleft, distright});
 
 
 }
