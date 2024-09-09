@@ -128,7 +128,7 @@ private:
 	int shadowoffsety;
 	float shadowscale;
 
-	float speed, angle;
+	float speed, angle, maxspeed;
 	bool ismoving;
 	int savedvelocityx, savedvelocityy;
 	bool ishitanimating;
@@ -163,6 +163,9 @@ private:
 	int prevmousey;
 	float mindistance;
 	float disttop, distbot, distleft, distright;
+    float prevmouseyleft;
+    float prevmouseyright;
+    float currentmousey;
 
 };
 
