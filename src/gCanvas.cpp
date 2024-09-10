@@ -88,7 +88,11 @@ void gCanvas::mouseDragged(int x, int y, int button) {
 		            pudleft.y = std::max(pudleft.y, 115.0f);
 		            pudleft.y = std::min(pudleft.y, 600 - pudleft.h);
 
-		            pudleft.velocityy = currentmousey - prevmouseyleft;
+		    	    if (currentmousey != prevmouseyleft) {
+		    	        pudleft.velocityy = currentmousey - prevmouseyleft;
+		    	    } else {
+		    	        pudleft.velocityy = 0;
+		    	    }
 
 		            prevmouseyleft = currentmousey;
 		        } else {
@@ -96,7 +100,11 @@ void gCanvas::mouseDragged(int x, int y, int button) {
 
 		            pudright.y = std::max(pudright.y, 115.0f);
 		            pudright.y = std::min(pudright.y, 600 - pudleft.h);
-		            pudright.velocityy = currentmousey - prevmouseyright;
+		    	    if (currentmousey != prevmouseyright) {
+		    	        pudright.velocityy = currentmousey - prevmouseyright;
+		    	    } else {
+		    	        pudright.velocityy = 0;
+		    	    }
 		            prevmouseyright = currentmousey;
 		        }
 	    }
@@ -109,6 +117,10 @@ void gCanvas::mousePressed(int x, int y, int button) {
 
 void gCanvas::mouseReleased(int x, int y, int button) {
 //	gLogi("gCanvas") << "mouseReleased" << ", button:" << button;
+    if (button == MOUSEBUTTON_LEFT) {
+        pudleft.velocityy = 0;
+        pudright.velocityy = 0;
+    }
 }
 
 void gCanvas::mouseScrolled(int x, int y) {
@@ -228,14 +240,14 @@ void gCanvas::setupPuds() {
 
 	pudleft.w = pudleftimage.getWidth() / 5;
 	pudleft.h = pudleftimage.getHeight();
-	pudleft.x = 270;
+	pudleft.x = 220;
 	pudleft.y = (getHeight() - pudleft.h) / 2;
 	pudleft.velocityy = 0;
 	pudanimationactiveleft = false;
 
 	pudright.w = pudrightimage.getWidth() / 5;
 	pudright.h = pudrightimage.getHeight();
-	pudright.x = 1005 - pudright.w;
+	pudright.x = 1055 - pudright.w;
 	pudright.y = (getHeight() - pudright.h) / 2;
 	pudright.velocityy = 0;
 	pudanimationactiveright = false;
@@ -283,8 +295,40 @@ void gCanvas::drawGoal() {
 
 void gCanvas::updateBallPosition() {
 	 checkGoal();
-	 if(ismoving){
+	 if(ismoving){ // direkler
+		 if(ball.y > ustdirek && ball.y < altdirek){
+			 for (int i = 0; i < 2; i++) {
+				if (checkPostCollision(ball, goalpostleft[i])) {
+					reflectBall(ball, goalpostleft[i]);
+				}
+				if (checkPostCollision(ball, goalpostright[i])) {
+					reflectBall(ball, goalpostright[i]);
+			    }
+			}
+		 } else {// map sinirlari
+			 if((ball.x - ball.radius <= gamelinelimitx[0] || ball.x + ball.radius >= gamelinelimitx[1]) && (ball.y + ball.radius >= goalyend || ball.y - ball.radius <= goalystart)){
+				 startHitAnimation(ball.x, ball.y);
+				 ball.velocityx *= -1;
 
+				    if (ball.x - ball.radius <= gamelinelimitx[0])
+				        ball.x = gamelinelimitx[0] + ball.radius;
+				    else if (ball.x + ball.radius >= gamelinelimitx[1])
+				        ball.x = gamelinelimitx[1] - ball.radius;
+
+			 }
+			 if (ball.y - ball.radius <= gamelinelimity[0] || ball.y + ball.radius >= gamelinelimity[1] ) {
+				 startHitAnimation(ball.x, ball.y);
+				 ball.velocityy *= -1;
+
+				 if (ball.y - ball.radius <= gamelinelimity[0])
+				         ball.y = gamelinelimity[0] + ball.radius;
+				     else if (ball.y + ball.radius >= gamelinelimity[1])
+				         ball.y = gamelinelimity[1] - ball.radius;
+			 }
+			 if(abs(ball.velocityy) > 20)
+			 ball.velocityy *= 0.5;
+		 }
+		 // pudlar
 		    if (checkPudCollision(ball, pudleft)) {
 		        if (!pudanimationactiveleft) {
 		            startPudAnimation(LEFT);
@@ -301,29 +345,7 @@ void gCanvas::updateBallPosition() {
 		        reflectBall(ball, pudright);
 		    }
 
-		 if(ball.y > ustdirek && ball.y < altdirek){
-			 for (int i = 0; i < 2; i++) {
-				if (checkPostCollision(ball, goalpostleft[i])) {
-					reflectBall(ball, goalpostleft[i]);
-				}
-				if (checkPostCollision(ball, goalpostright[i])) {
-					reflectBall(ball, goalpostright[i]);
-			    }
-			}
-		 } else {
-			 if((ball.x - ball.radius <= gamelinelimitx[0] || ball.x + ball.radius >= gamelinelimitx[1]) && (ball.y + ball.radius >= goalyend || ball.y - ball.radius <= goalystart)){
-				 startHitAnimation(ball.x, ball.y);
-				 ball.velocityx *= -1;
 
-
-			 }
-			 if (ball.y - ball.radius <= gamelinelimity[0] || ball.y + ball.radius >= gamelinelimity[1] ) {
-				 startHitAnimation(ball.x, ball.y);
-				 ball.velocityy *= -1;
-				 if(ball.velocityy > 20)
-				 ball.velocityy *= 0.5;
-			 }
-		 }
 
 		ball.x += ball.velocityx;
 		ball.y += ball.velocityy;
@@ -453,22 +475,20 @@ void gCanvas::reflectBall(Ball &ball, Pud &pud) {
 	 if (mindistance == disttop || mindistance == distbot) {
 	        ball.velocityy *= -1;
 	        ball.velocityy += pud.velocityy;
-	        if(ball.velocityy > maxspeed)
-	        	ball.velocityy = maxspeed;
-	        if(ball.velocityy < -1 * maxspeed)
-	        	ball.velocityy = -1 * maxspeed;
 	        ball.y = (mindistance == disttop) ? pud.y - ball.radius : pud.y + pud.h + ball.radius;
 	    }
 
 	    if (mindistance == distleft || mindistance == distright) {
 	        ball.velocityx *= -1;
-	        if(abs(ball.velocityx) < speed)
-	        	ball.velocityx *= speed / ball.velocityx;
 	        ball.velocityy += pud.velocityy;
 	        if(abs(ball.velocityy) > maxspeed)
-	        	ball.velocityy *= maxspeed / ball.velocityy;
+	        ball.velocityy *= maxspeed / ball.velocityy;
 	        ball.x = (mindistance == distleft) ? pud.x - ball.radius : pud.x + pud.w + ball.radius;
 	    }
+        if(abs(ball.velocityx) < speed)
+        	ball.velocityx *= speed / ball.velocityx;
+
+
 
 }
 void gCanvas::closestSide(Ball &ball, Pud &pud) {
