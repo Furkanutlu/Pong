@@ -43,6 +43,7 @@ private:
 	static const int maxmapimages = 5; // toplam map sayisi
 	static const int maxgoalnum = 2;
 	static const int maxplayernum = 2;
+	static const int movespeed = 5;
 	static const int PLAYER_LEFT = 0, PLAYER_RIGHT = 1;
 	static const int UST_DIREK = 0, ALT_DIREK = 1;
 	static const int LEFT = 0, RIGHT = 1, BOTTOM = 2, TOP = 3;
@@ -94,6 +95,8 @@ private:
 	void updateBallPosition();
 	void updateHitAnimating();
 	void updatePudAnimating();
+	void updateBot();
+	void updatePudControl();
 
 	void checkGoal();
 	bool checkPudCollision(Ball& ball, Pud& pud);
@@ -166,6 +169,14 @@ private:
     float prevmouseyleft;
     float prevmouseyright;
     float currentmousey;
+    bool isuserleft;
+    bool isuserright;
+
+    float botcentery, ballcentery;
+    float targety;
+    float errormargin;
+    bool ismovingupright, ismovingupleft;
+    bool ismovingdownright, ismovingdownleft;
 
 };
 

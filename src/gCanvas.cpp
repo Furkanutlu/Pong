@@ -28,6 +28,8 @@ void gCanvas::update() {
 	updateBallPosition();
 	updateHitAnimating();
 	updatePudAnimating();
+	updateBot();
+	updatePudControl();
 }
 
 void gCanvas::draw() {
@@ -42,7 +44,7 @@ void gCanvas::draw() {
 }
 
 void gCanvas::keyPressed(int key) {
-//	gLogi("gCanvas") << "keyPressed:" << key;
+//gLogi("gCanvas") << "keyPressed:" << key;
 	if (key == 82) {
 	        resetBall();
 	    }
@@ -65,13 +67,51 @@ void gCanvas::keyPressed(int key) {
             ismoving = true;
         }
     }
+    if (key == '1') {
+        isuserleft = true;
+        isuserright = false;
+    }
+    if (key == '2') {
+    	isuserleft = false;
+        isuserright = true;
+    }
+    if (key == 265 || key == 87) {
+               if (isuserright) {
+            	   ismovingupright = true;
+               } else if (isuserleft) {
+            	   ismovingupleft = true;
+               }
+           }
+           if (key == 264 || key == 83) {
+               if (isuserright) {
+            	   ismovingdownright = true;
+               } else if (isuserleft) {
+            	   ismovingdownleft = true;
+               }
+           }
+
 }
 void gCanvas::keyReleased(int key) {
 //	gLogi("gCanvas") << "keyReleased:" << key;
+    if (key == 265 || key == 87) { // Up arrow or 'W'
+        if (isuserright) {
+        	ismovingupright = false;
+        } else if (isuserleft) {
+        	ismovingupleft = false;
+        }
+    }
+    if (key == 264 || key == 83) { // Down arrow or 'S'
+        if (isuserright) {
+        	ismovingdownright = false;
+        } else if (isuserleft) {
+        	ismovingdownleft = false;
+        }
+    }
 }
 
 void gCanvas::charPressed(unsigned int codepoint) {
 //	gLogi("gCanvas") << "charPressed:" << gCodepointToStr(codepoint);
+
 }
 
 void gCanvas::mouseMoved(int x, int y) {
@@ -99,7 +139,7 @@ void gCanvas::mouseDragged(int x, int y, int button) {
 		            pudright.y = currentmousey - pudright.h / 2;
 
 		            pudright.y = std::max(pudright.y, 115.0f);
-		            pudright.y = std::min(pudright.y, 600 - pudleft.h);
+		            pudright.y = std::min(pudright.y, 600 - pudright.h);
 		    	    if (currentmousey != prevmouseyright) {
 		    	        pudright.velocityy = currentmousey - prevmouseyright;
 		    	    } else {
@@ -514,4 +554,67 @@ float gCanvas::calculateAngle(int velocityx, int velocityy) {
 	    return fmod(angledegrees + 360.0f, 360.0f);
 }
 
+void gCanvas::updateBot() {
+	bool ballinrightside = ball.x > getWidth() / 2;
+    if (isuserleft) {
+        if (!isuserright) {
+        	if(ballinrightside){
+                botcentery = pudright.y + pudright.h / 2;
+                ballcentery = ball.y;
+
+                targety = ballcentery - pudright.h / 2;
+                errormargin = 50.0f;
+
+                if (ballcentery < pudright.y + errormargin) {
+                    pudright.y -= 5.0f;
+                } else if (ballcentery > pudright.y + pudright.h - errormargin) {
+                    pudright.y += 5.0f;
+                }
+
+                pudright.y = std::max(pudright.y, 115.0f);
+                pudright.y = std::min(pudright.y, 600 - pudright.h);
+        	}
+
+        }
+    } else if (isuserright) {
+
+        if (!isuserleft) {
+        	if(!ballinrightside){
+        		botcentery = pudleft.y + pudleft.h / 2;
+        		ballcentery = ball.y;
+
+        		targety = ballcentery - pudleft.h / 2;
+        		errormargin = 50.0f;
+        		if (ballcentery < pudleft.y + errormargin) {
+        		pudleft.y -= 5.0f;
+        	} else if (ballcentery > pudleft.y + pudleft.h - errormargin) {
+        		pudleft.y += 5.0f;
+        	}
+        		pudleft.y = std::max(pudleft.y, 115.0f);
+        		pudleft.y = std::min(pudleft.y, 600 - pudleft.h);
+        	}
+
+        }
+    }
+}
+
+void gCanvas::updatePudControl() {
+    if (ismovingupleft) {
+        pudleft.y -= movespeed;
+        pudleft.y = std::max(pudleft.y, 115.0f);
+    }
+    if (ismovingupright) {
+        pudright.y -= movespeed;
+        pudright.y = std::max(pudright.y, 115.0f);
+    }
+
+    if (ismovingdownleft) {
+        pudleft.y += movespeed;
+        pudleft.y = std::min(pudleft.y, 600 - pudleft.h);
+    }
+    if (ismovingdownright) {
+        pudright.y += movespeed;
+        pudright.y = std::min(pudright.y, 600 - pudright.h);
+    }
+}
 
