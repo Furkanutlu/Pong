@@ -95,14 +95,10 @@ void menuCanvas::mouseReleased(int x, int y, int button) {
 	for(int i = 0; i < OPTIONS_BUTTON_COUNT; i++) {
 		if(gamestate == BUTTON_OPTIONS && x > opbutton[i].x && x < (opbutton[i].x + opbutton[i].w) && y > opbutton[i].y && y < (opbutton[i].y + opbutton[i].h / 2)) {
 			if(i == ACCEPT_BUTTON) {
-				updateSettingsDatabase("difficultystate", difficultystate);
-				updateSettingsDatabase("musicstate", musicstate);
-				updateSettingsDatabase("vibrationstate", vibrationstate);
+				gLogi("Onaylandi");
 			}
 			if(i == DECLINE_BUTTON) {
-				musicstate = premusicstate;
-				difficultystate = predifficultystate;
-				vibrationstate = previbrationstate;
+				gLogi("Onaylanmadi");
 			}
 
 			if(musicstate) root->clicksound.play();
@@ -118,17 +114,13 @@ void menuCanvas::mouseReleased(int x, int y, int button) {
 
 			if(i == SLIDER_DIFFICULTY) {
 				difficultystate = sliderselected[i];
-				predifficultystate = !sliderselected[i];
 			}
 			if(i == SLIDER_MUSIC) {
 				musicstate = sliderselected[i];
-				premusicstate = !sliderselected[i];
-
 				root->music.setPaused(!musicstate);
 			}
 			if(i == SLIDER_VIBRATION) {
 				vibrationstate = sliderselected[i];
-				previbrationstate = !sliderselected[i];
 			}
 
 			if(musicstate) root->clicksound.play();
@@ -149,6 +141,9 @@ void menuCanvas::mouseEntered() {
 }
 
 void menuCanvas::mouseExited() {
+}
+
+void menuCanvas::gameManager(int gamestate) {
 }
 
 void menuCanvas::setupBackground() {
@@ -231,9 +226,10 @@ void menuCanvas::drawGoal() {
 }
 
 void menuCanvas::setupOptionsMenu() {
-	musicstate = root->musicstate;
-	difficultystate = root->difficultystate;
-	vibrationstate = root->vibrationstate;
+	musicstate = false;
+	soundstate = false;
+	difficultystate = false;
+	vibrationstate = false;
 
 	for(int i = 0; i < OPTIONS_COUNT; i++) {
 		if(i == SLIDER_DIFFICULTY) sliderselected[i] = difficultystate;
@@ -298,15 +294,6 @@ void menuCanvas::setupOptionsMenu() {
 		slider[i].y = sliderbg[i].y + ((sliderbg[i].h - (slider[i].h / 2)) / 2);
 	}
 
-	sliderselected[SLIDER_DIFFICULTY] = difficultystate;
-	sliderselected[SLIDER_MUSIC] = musicstate;
-	sliderselected[SLIDER_VIBRATION] = vibrationstate;
-
-	for(int i = 0; i < OPTIONS_COUNT; i++) {
-		if(sliderselected[i] == true) slider[i].x = slidermaxx[i];
-		else slider[i].x = sliderminx[i];
-	}
-
 	optionsfont.loadFont("FreeSansBold.ttf", 18);
 	optionstext[0] = "Difficulty";
 	optionstext[1] = "Music";
@@ -346,12 +333,4 @@ void menuCanvas::drawOptionsMenu() {
 	}
 	opbuttons[DECLINE_BUTTON].drawSub(opbutton[0].x, opbutton[0].y, opbutton[0].w, opbutton[0].w, 0, 0, opbutton[0].sw, opbutton[0].sh);
 	opbuttons[ACCEPT_BUTTON].drawSub(opbutton[1].x, opbutton[1].y, opbutton[1].w, opbutton[1].w, 0, 0, opbutton[1].sw, opbutton[1].sh);
-}
-
-void menuCanvas::updateSettingsDatabase(std::string datatype, int datavalue) {
-	std::string updatestatement = "UPDATE optionst SET "+ datatype + " = " + gToStr(datavalue);
-	root->database.execute(updatestatement);
-	if(datatype == "difficultystate") root->difficultystate = datavalue;
-	if(datatype == "musicstate") root->musicstate = datavalue;
-	if(datatype == "vibrationstate") root->vibrationstate = datavalue;
 }

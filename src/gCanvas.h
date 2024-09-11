@@ -146,11 +146,7 @@ private:
 
 	void setupGameMode();
 	void drawGameMode();
-	void selectGameMode(int gamemode, int playerpos);
-
-    void updateSettingsDatabase(std::string datatype, int datavalue);
-
-    void soundsoff();
+	void selectGameMode(int gamemode);
 
 	int mapx, mapy, mapw, maph;
 	int goalx[maxgoalnum], goaly[maxgoalnum], goalw[maxgoalnum], goalh[maxgoalnum];
@@ -272,7 +268,6 @@ private:
 	};
 
 	ButtonCoordinates buttoncoordinategroup[BUTTON_COUNT];
-	ButtonCoordinates buttonendcoordinategroup[BUTTON_COUNT];
 
 	gImage pausebutton;
 	int pausebuttonx, pausebuttony, pausebuttonw, pausebuttonh, pausestate;
@@ -327,13 +322,10 @@ private:
 	int endboardheaderx, endboardheadery, endboardheaderw, endboardheaderh;
 
 	// Option states
-	bool musicstate, difficultystate, vibrationstate;
-	bool premusicstate, predifficultystate, previbrationstate;
+	bool musicstate, soundstate;
+	bool difficultystate, vibrationstate;
 
 	static const int SLIDER_DIFFICULTY = 0, SLIDER_MUSIC = 1, SLIDER_VIBRATION = 2;
-
-	// Game End Panel
-
 
 	// Player type
 	gFont selectfont;

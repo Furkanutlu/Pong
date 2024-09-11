@@ -56,7 +56,7 @@ private:
     void setupOptionsMenu();
     void drawOptionsMenu();
 
-    void updateSettingsDatabase(std::string datatype, int datavalue);
+    void gameManager(int gamestate);
 
 	gImage background;
 	int backgroundw, backgroundh;
@@ -125,8 +125,8 @@ private:
 	gFont boardfont;
 
 	// VFX
-	bool musicstate, difficultystate, vibrationstate;
-	bool premusicstate, predifficultystate, previbrationstate;
+	bool musicstate, soundstate;
+	bool difficultystate, vibrationstate;
 };
 
 #endif /* SRC_MENU_H_ */
