@@ -10,6 +10,7 @@
 
 #include "gBaseApp.h"
 #include "gFmodSound.h"
+#include "gDatabase.h"
 
 
 class gApp : public gBaseApp {
@@ -21,7 +22,7 @@ public:
 	void setup();
 	void update();
 
-	int musicon, musicoff;
+	int musicstate, difficultystate, vibrationstate;
 
 	gFmodSound music;
 	gFmodSound buttonsound;
@@ -29,6 +30,8 @@ public:
 	gFmodSound ballhitsound;
 	gFmodSound whistlesound;
 	gFmodSound goalsound;
+
+	gDatabase database;
 };
 
 #endif /* GAPP_H_ */
