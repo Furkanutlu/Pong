@@ -195,17 +195,7 @@ void gCanvas::mousePressed(int x, int y, int button) {
 //	gLogi("gCanvas") << "mousePressed" << ", x:" << x << ", y:" << y << ", b:" << button;
 	for(int i = 0; i < BUTTON_COUNT; i++) {
 		if(x > buttoncoordinategroup[i].x && x < (buttoncoordinategroup[i].x + buttoncoordinategroup[i].w) && y > buttoncoordinategroup[i].y && y < (buttoncoordinategroup[i].y + (buttoncoordinategroup[i].h / 2))) {
-			switch(i) {
-				case 0:
-					buttoncoordinategroup[i].hold = true;
-					break;
-				case 1:
-					buttoncoordinategroup[i].hold = true;
-					break;
-				case 2:
-					buttoncoordinategroup[i].hold = true;
-					break;
-			}
+			buttoncoordinategroup[i].hold = true;
 		}
 	}
 
@@ -225,9 +215,10 @@ void gCanvas::mousePressed(int x, int y, int button) {
 
 	// Slider press control
 	for(int i = 0; i < OPTIONS_COUNT; i++) {
-		if(gamestate == BUTTON_OPTIONS && x > slider[i].x && x < slider[i].x + slider[i].w && y > slider[i].y && y < slider[i].y + slider[i].h){
+		if(gamestate == GAME_OPTIONS && x > slider[i].x && x < slider[i].x + slider[i].w && y > slider[i].y && y < slider[i].y + slider[i].h){
 			sliderselected[i] = true;
 			if(musicstate) root->clicksound.play();
+			gLogi("Slider týklandý");
 		}
 	}
 
@@ -269,26 +260,34 @@ void gCanvas::mouseReleased(int x, int y, int button) {
 		if(musicstate) root->clicksound.play();
 	}
 
-	// Other Buttons
-	for(int i = 0; i < BUTTON_COUNT; i++) {
-		if(gamestate == GAME_PAUSE && x > buttoncoordinategroup[i].x && x < (buttoncoordinategroup[i].x + buttoncoordinategroup[i].w) && y > buttoncoordinategroup[i].y && y < (buttoncoordinategroup[i].y + (buttoncoordinategroup[i].h / 2))) {
-			if(i == BUTTON_REPLAY) {
-				if(musicstate) root->clicksound.play(); // If this code is not here, there will be no sound.
-				buttoncoordinategroup[i].state = true;
-				gCanvas* replay = new gCanvas(root);
-				appmanager->setCurrentCanvas(replay);
-			}
-			if(i == BUTTON_HOME) {
-				menuCanvas* main = new menuCanvas(root);
-				appmanager->setCurrentCanvas(main);
-			}
-			if(i == BUTTON_OPTIONS) {
-				gamestate = GAME_OPTIONS;
-				if(musicstate) root->clicksound.play();
+	// Pause Options Buttons düzenleniyor
+	if(gamestate == GAME_PAUSE) {
+		gLogi("Here4");
+		for(int i = 0; i < BUTTON_COUNT; i++) {
+
+			gLogi("Heree");
+			if(buttoncoordinategroup[i].state) {
+				gLogi("Here");
+				if(i == BUTTON_REPLAY) {
+					gLogi("Here1");
+					if(musicstate) root->clicksound.play(); // If this code is not here, there will be no sound.
+					buttoncoordinategroup[i].state = true;
+					gCanvas* replay = new gCanvas(root);
+					appmanager->setCurrentCanvas(replay);
+				}
+				if(i == BUTTON_HOME) {
+					gLogi("Here2");
+					menuCanvas* main = new menuCanvas(root);
+					appmanager->setCurrentCanvas(main);
+				}
+				if(i == BUTTON_OPTIONS) {
+					gLogi("Here3");
+					gamestate = GAME_OPTIONS;
+					if(musicstate) root->clicksound.play();
+				}
 			}
 		}
 	}
-
 	// Game End Buttons
 	if(gamestate == GAME_LOSE || gamestate == GAME_WIN) {
 		for(int i = 0; i < BUTTON_COUNT; i++) {
@@ -345,7 +344,7 @@ void gCanvas::mouseReleased(int x, int y, int button) {
 
 	if(opbutton[ACCEPT_BUTTON].state) {
 		opbutton[ACCEPT_BUTTON].state = false;
-		gamestate = GAME_NORMAL;
+		gamestate = GAME_PAUSE;
 	}
 
 	// Pud idk
@@ -1359,10 +1358,6 @@ void gCanvas::goalEvent(int whoscored) {
 		boardtext = "Player 2 Win";
 	}
 	else gamestate = GAME_GOAL;
-}
-
-int gCanvas::normalizeSlider(int minx, int maxx, int x) {
-	return std::round((static_cast<double>(x - minx) * 100) / (maxx - minx));
 }
 
 void gCanvas::selectGameMode(int gamemode, int playerpos) {

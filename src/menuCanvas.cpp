@@ -356,9 +356,9 @@ void menuCanvas::updateSliderPosition(int whichslider, int value) {
 void menuCanvas::updateSettingsDatabase(std::string datatype, int datavalue) {
 	std::string updatestatement = "UPDATE optionst SET "+ datatype + " = " + gToStr(datavalue);
 	root->database.execute(updatestatement);
-	if(datatype == "difficultystate") root->difficultystate = datavalue;
-	if(datatype == "musicstate") root->musicstate = datavalue;
-	if(datatype == "vibrationstate") root->vibrationstate = datavalue;
+	if(datatype == "difficultystate") root->difficultyvalue = datavalue;
+	if(datatype == "musicstate") root->musicvalue = datavalue;
+	if(datatype == "vibrationstate") root->vibrationvalue = datavalue;
 }
 
 int menuCanvas::normalizeSlider(int minx, int maxx, int x) {
