@@ -158,9 +158,7 @@ private:
 	void selectGameMode(int gamemode, int playerpos);
 
 	void sliderControl();
-    void soundControl();
-
-	int normalizeSlider(int minx, int maxx, int x);
+    void soundControl(bool musicvalue);
 
 	int mapx, mapy, mapw, maph;
 	int goalx[maxgoalnum], goaly[maxgoalnum], goalw[maxgoalnum], goalh[maxgoalnum];
@@ -280,8 +278,10 @@ private:
 	ButtonCoordinates buttoncoordinategroup[BUTTON_COUNT];
 	ButtonCoordinates buttonendcoordinategroup[BUTTON_COUNT];
 	ButtonCoordinates opbutton[OPTIONS_BUTTON_COUNT];
+	ButtonCoordinates modebutton[maxplayernum];
+	ButtonCoordinates pausebutton;
 
-	gImage pausebutton;
+	gImage pausebuttonimg;
 	int pausebuttonx, pausebuttony, pausebuttonw, pausebuttonh, pausestate;
 	int pausecx, pausecy, pauseradius;
 
@@ -309,7 +309,6 @@ private:
 	PANEL slider[OPTIONS_COUNT];
 	PANEL sliderbg[OPTIONS_COUNT];
 	PANEL opicon[OPTIONS_COUNT];
-	PANEL opbutton[OPTIONS_BUTTON_COUNT];
 
 	gImage optionsicon[OPTIONS_COUNT];
 	gImage optionsimg[OPTIONS_COUNT];
@@ -317,7 +316,6 @@ private:
 
 	gImage sliderimg[2];
 	int sliderminx[OPTIONS_COUNT], slidermaxx[OPTIONS_COUNT];
-	int musicvalue[OPTIONS_COUNT];
 	bool sliderselected[OPTIONS_COUNT];
 
 	gFont optionsfont;
@@ -331,6 +329,7 @@ private:
 
 	// Option states
 	bool musicstate, difficultystate, vibrationstate;
+	int musicvalue, difficultyvalue, vibrationvalue;
 	bool premusicstate, predifficultystate, previbrationstate;
 
 	// Game End Panel
@@ -338,7 +337,6 @@ private:
 	// Player type
 	gFont selectfont;
 	gImage panelbutton;
-	PANEL modebutton[maxplayernum];
 	std::string selecttext[maxplayernum];
 };
 
