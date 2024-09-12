@@ -158,7 +158,9 @@ private:
 	void selectGameMode(int gamemode, int playerpos);
 
 	void sliderControl();
-    void soundControl(bool musicvalue);
+    void soundControl();
+
+	int normalizeSlider(int minx, int maxx, int x);
 
 	int mapx, mapy, mapw, maph;
 	int goalx[maxgoalnum], goaly[maxgoalnum], goalw[maxgoalnum], goalh[maxgoalnum];
@@ -307,6 +309,7 @@ private:
 	PANEL slider[OPTIONS_COUNT];
 	PANEL sliderbg[OPTIONS_COUNT];
 	PANEL opicon[OPTIONS_COUNT];
+	PANEL opbutton[OPTIONS_BUTTON_COUNT];
 
 	gImage optionsicon[OPTIONS_COUNT];
 	gImage optionsimg[OPTIONS_COUNT];
@@ -314,6 +317,7 @@ private:
 
 	gImage sliderimg[2];
 	int sliderminx[OPTIONS_COUNT], slidermaxx[OPTIONS_COUNT];
+	int musicvalue[OPTIONS_COUNT];
 	bool sliderselected[OPTIONS_COUNT];
 
 	gFont optionsfont;
@@ -327,7 +331,6 @@ private:
 
 	// Option states
 	bool musicstate, difficultystate, vibrationstate;
-	int musicvalue, difficultyvalue, vibrationvalue;
 	bool premusicstate, predifficultystate, previbrationstate;
 
 	// Game End Panel
