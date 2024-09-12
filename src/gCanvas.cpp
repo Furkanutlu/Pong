@@ -213,7 +213,7 @@ void gCanvas::mousePressed(int x, int y, int button) {
 		if(gamestate == GAME_OPTIONS && x > slider[i].x && x < slider[i].x + slider[i].w && y > slider[i].y && y < slider[i].y + slider[i].h){
 			sliderselected[i] = true;
 			if(musicstate) root->clicksound.play();
-			gLogi("Slider týklandý");
+
 		}
 	}
 
