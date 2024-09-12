@@ -195,17 +195,7 @@ void gCanvas::mousePressed(int x, int y, int button) {
 //	gLogi("gCanvas") << "mousePressed" << ", x:" << x << ", y:" << y << ", b:" << button;
 	for(int i = 0; i < BUTTON_COUNT; i++) {
 		if(x > buttoncoordinategroup[i].x && x < (buttoncoordinategroup[i].x + buttoncoordinategroup[i].w) && y > buttoncoordinategroup[i].y && y < (buttoncoordinategroup[i].y + (buttoncoordinategroup[i].h / 2))) {
-			switch(i) {
-				case 0:
-					buttoncoordinategroup[i].hold = true;
-					break;
-				case 1:
-					buttoncoordinategroup[i].hold = true;
-					break;
-				case 2:
-					buttoncoordinategroup[i].hold = true;
-					break;
-			}
+			buttoncoordinategroup[i].hold = true;
 		}
 	}
 
@@ -213,21 +203,17 @@ void gCanvas::mousePressed(int x, int y, int button) {
 	if(gamestate == GAME_LOSE || gamestate == GAME_WIN) {
 		for(int i = 0; i < BUTTON_COUNT - 1; i++) {
 			if(x > (buttonendcoordinategroup[i].x + (buttonendcoordinategroup[i].w / 2)) && x < (((buttonendcoordinategroup[i].x + (buttonendcoordinategroup[i].w / 2))) + buttonendcoordinategroup[i].w) && y > (buttonendcoordinategroup[i].y + endboardheaderh) && y < ((buttonendcoordinategroup[i].y + endboardheaderh) + (buttonendcoordinategroup[i].h / 2))) {
-				if(i == BUTTON_REPLAY) {
-					buttonendcoordinategroup[i].hold = true;
-				}
-				if(i == BUTTON_HOME) {
-					buttonendcoordinategroup[i].hold = true;
-				}
+				buttonendcoordinategroup[i].hold = true;
 			}
 		}
 	}
 
 	// Slider press control
 	for(int i = 0; i < OPTIONS_COUNT; i++) {
-		if(gamestate == BUTTON_OPTIONS && x > slider[i].x && x < slider[i].x + slider[i].w && y > slider[i].y && y < slider[i].y + slider[i].h){
+		if(gamestate == GAME_OPTIONS && x > slider[i].x && x < slider[i].x + slider[i].w && y > slider[i].y && y < slider[i].y + slider[i].h){
 			sliderselected[i] = true;
 			if(musicstate) root->clicksound.play();
+			gLogi("Slider týklandý");
 		}
 	}
 
@@ -239,7 +225,7 @@ void gCanvas::mousePressed(int x, int y, int button) {
 	// Mode panel button
 	for(int i = 0; i < maxplayernum; i++) {
 		if(gamestate == GAME_SELECT_MODE && x > modebutton[i].x && x < (modebutton[i].x + modebutton[i].w) && y > modebutton[i].y && y < (modebutton[i].y + modebutton[i].h / 2)) {
-			modebutton[i].selected = true;
+			modebutton[i].hold = true;
 		}
 	}
 }
@@ -263,36 +249,38 @@ void gCanvas::mouseReleased(int x, int y, int button) {
 //----- The codes above is for control purposes.
 
 	// Pause Button
-	if(gamestate != GAME_SELECT_MODE && x > (pausebuttonx - (pausebuttonw * 1.25f)) && x < (pausebuttonx + pausebuttonw + (pausebuttonw * 1.25f)) && y > (pausebuttony - (pausebuttonw * 1.25f)) && y < (pausebuttony + pausebuttonh + (pausebuttonw * 1.25f))) {
+	if(gamestate != GAME_SELECT_MODE && pausebutton.hold) {
 		if(gamestate != GAME_PAUSE) gamestate = GAME_PAUSE;
 		else gamestate = GAME_START;
 		if(musicstate) root->clicksound.play();
 	}
 
-	// Other Buttons
-	for(int i = 0; i < BUTTON_COUNT; i++) {
-		if(gamestate == GAME_PAUSE && x > buttoncoordinategroup[i].x && x < (buttoncoordinategroup[i].x + buttoncoordinategroup[i].w) && y > buttoncoordinategroup[i].y && y < (buttoncoordinategroup[i].y + (buttoncoordinategroup[i].h / 2))) {
-			if(i == BUTTON_REPLAY) {
-				if(musicstate) root->clicksound.play(); // If this code is not here, there will be no sound.
-				buttoncoordinategroup[i].state = true;
-				gCanvas* replay = new gCanvas(root);
-				appmanager->setCurrentCanvas(replay);
-			}
-			if(i == BUTTON_HOME) {
-				menuCanvas* main = new menuCanvas(root);
-				appmanager->setCurrentCanvas(main);
-			}
-			if(i == BUTTON_OPTIONS) {
-				gamestate = GAME_OPTIONS;
-				if(musicstate) root->clicksound.play();
+	// Pause Options Buttons düzenleniyor
+	if(gamestate == GAME_PAUSE) {
+		for(int i = 0; i < BUTTON_COUNT; i++) {
+			if(buttoncoordinategroup[i].hold) {
+				if(i == BUTTON_REPLAY) {
+					if(musicstate) root->clicksound.play(); // If this code is not here, there will be no sound.
+					buttoncoordinategroup[i].state = true;
+					gCanvas* replay = new gCanvas(root);
+					appmanager->setCurrentCanvas(replay);
+				}
+				if(i == BUTTON_HOME) {
+					menuCanvas* main = new menuCanvas(root);
+					appmanager->setCurrentCanvas(main);
+				}
+				if(i == BUTTON_OPTIONS) {
+					gamestate = GAME_OPTIONS;
+					if(musicstate) root->clicksound.play();
+				}
+				buttoncoordinategroup[i].hold = false;
 			}
 		}
 	}
-
 	// Game End Buttons
 	if(gamestate == GAME_LOSE || gamestate == GAME_WIN) {
 		for(int i = 0; i < BUTTON_COUNT; i++) {
-			if(x > (buttonendcoordinategroup[i].x + (buttonendcoordinategroup[i].w / 2)) && x < (((buttonendcoordinategroup[i].x + (buttonendcoordinategroup[i].w / 2))) + buttonendcoordinategroup[i].w) && y > (buttonendcoordinategroup[i].y + endboardheaderh) && y < ((buttonendcoordinategroup[i].y + endboardheaderh) + (buttonendcoordinategroup[i].h / 2))) {
+			if(buttonendcoordinategroup[i].hold) {
 				if(i == BUTTON_REPLAY) {
 					if(musicstate) root->clicksound.play(); // If this code is not here, there will be no sound.
 					buttoncoordinategroup[i].state = true;
@@ -345,7 +333,7 @@ void gCanvas::mouseReleased(int x, int y, int button) {
 
 	if(opbutton[ACCEPT_BUTTON].state) {
 		opbutton[ACCEPT_BUTTON].state = false;
-		gamestate = GAME_NORMAL;
+		gamestate = GAME_PAUSE;
 	}
 
 	// Pud idk
@@ -362,15 +350,13 @@ void gCanvas::mouseReleased(int x, int y, int button) {
 	}
 
 	for(int i = 0; i < maxplayernum; i++) {
-		if(gamestate == GAME_SELECT_MODE && x > modebutton[i].x && x < (modebutton[i].x + modebutton[i].w) && y > modebutton[i].y && y < (modebutton[i].y + modebutton[i].h / 2)) {
+		if(modebutton[i].hold) {
 			if(gamemode == MODE_NONE) {
-				if(i == 0) {
-					modebutton[i].selected = false;
+				if(i == MODE_PVP) {
 					gamemode = MODE_PVP;
 					gamestate = GAME_START;
 				}
-				else {
-					modebutton[i].selected = false;
+				else if(i == MODE_PVE) {
 					gamemode = MODE_PVE;
 					gamestate = GAME_START;
 
@@ -380,12 +366,12 @@ void gCanvas::mouseReleased(int x, int y, int button) {
 			}
 			if(gamemode == MODE_PVE) {
 				if(i == 0) {
-					modebutton[i].selected = false;
+					modebutton[i].hold = false;
 					gamemode = MODE_PVP;
 					gamestate = GAME_START;
 				}
 				else {
-					modebutton[i].selected = false;
+					modebutton[i].hold = false;
 					gamemode = MODE_PVE;
 					gamestate = GAME_START;
 				}
@@ -393,6 +379,8 @@ void gCanvas::mouseReleased(int x, int y, int button) {
 
 			selectGameMode(gamestate, 0);
 			resetBall();
+
+			modebutton[i].hold = false;
 		}
 	}
 }
@@ -576,15 +564,16 @@ void gCanvas::setupPauseMenu() {
 	button[0].loadImage("futbolassets/btn_round_again.png");
 	button[1].loadImage("futbolassets/btn_round_home.png");
 	button[2].loadImage("futbolassets/btn_round_options.png");
-	// Pause
-	pausebutton.loadImage("futbolassets/btn_pause.png");
-	pausebuttonw = pausebutton.getWidth();
-	pausebuttonh = pausebutton.getHeight();
-	pausebuttonx = getWidth() - (pausebuttonw * 2);
-	pausebuttony = pausebuttonh;
-	pausecx =  pausebuttonx + (pausebuttonh / 2);
-	pausecy = pausebuttony + (pausebuttonh / 2);
-	pauseradius = pausebuttonw * 1.25f;
+
+	// Pause Button
+	pausebuttonimg.loadImage("futbolassets/btn_pause.png");
+	pausebutton.w = pausebuttonimg.getWidth();
+	pausebutton.h = pausebuttonimg.getHeight();
+	pausebutton.x = getWidth() - (pausebutton.h * 2);
+	pausebutton.y = pausebutton.h;
+	pausecx =  pausebutton.x + (pausebutton.h / 2);
+	pausecy = pausebutton.y + (pausebutton.h / 2);
+	pauseradius = pausebutton.w * 1.25f;
 
 	// Panel
 	board.loadImage("futbolassets/board.png");
@@ -752,7 +741,7 @@ void gCanvas::setupGameMode() {
 		modebutton[i].y = (boardy + ((boardh - modebutton[i].h) / 2)) + (modebutton[i].h * i);
 		modebutton[i].sw = panelbutton.getWidth();
 		modebutton[i].sh = panelbutton.getHeight();
-		modebutton[i].selected = false;
+		modebutton[i].hold = false;
 	}
 	selecttext[PLAYER_LEFT] = "Player vs Player";
 	selecttext[PLAYER_RIGHT] = "Player vs NPC";
@@ -854,7 +843,7 @@ void gCanvas::drawPauseMenu() {
 	renderer->setColor(255, 255, 255);
 
 	if(pausestate) renderer->setColor(0, 200, 0);
-	pausebutton.draw(pausebuttonx, pausebuttony, pausebuttonw, pausebuttonh);
+	pausebuttonimg.draw(pausebutton.x, pausebutton.y, pausebutton.w, pausebutton.h);
 	renderer->setColor(255, 255, 255);
 
 	if(gamestate == GAME_PAUSE || gamestate == GAME_OPTIONS) {
@@ -921,7 +910,7 @@ void gCanvas::drawGameMode() {
 	boardfont.drawText(boardtext, boardheaderx + ((boardheaderw - boardfont.getStringWidth(boardtext)) / 2) , boardheadery + ((boardheaderh - boardfont.getStringHeight(boardtext)) / 1.15f));
 
 	for(int i = 0; i < maxplayernum; i++) {
-		panelbutton.drawSub(modebutton[i].x, modebutton[i].y, modebutton[i].w, modebutton[i].h / 2, 0, modebutton[i].h * modebutton[i].selected, modebutton[i].sw, modebutton[i].h);
+		panelbutton.drawSub(modebutton[i].x, modebutton[i].y, modebutton[i].w, modebutton[i].h / 2, 0, modebutton[i].h * modebutton[i].hold, modebutton[i].sw, modebutton[i].h);
 
 		renderer->setColor(0, 0, 0);
 		selectfont.drawText(selecttext[i], modebutton[i].x + ((modebutton[i].w - selectfont.getStringWidth(selecttext[i])) / 2), modebutton[i].y + ((modebutton[i].h - selectfont.getStringHeight(selecttext[i])) / 3));
@@ -1359,10 +1348,6 @@ void gCanvas::goalEvent(int whoscored) {
 		boardtext = "Player 2 Win";
 	}
 	else gamestate = GAME_GOAL;
-}
-
-int gCanvas::normalizeSlider(int minx, int maxx, int x) {
-	return std::round((static_cast<double>(x - minx) * 100) / (maxx - minx));
 }
 
 void gCanvas::selectGameMode(int gamemode, int playerpos) {
