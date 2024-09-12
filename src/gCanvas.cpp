@@ -18,6 +18,7 @@ gCanvas::~gCanvas() {
 }
 
 void gCanvas::setup() {
+	soundControl(0); // This line will be deleted later.
 	gamestate = GAME_SELECT_MODE;
 	gamemode = MODE_NONE;
 	setupMap();
@@ -140,10 +141,10 @@ void gCanvas::charPressed(unsigned int codepoint) {
 void gCanvas::mouseMoved(int x, int y) {
 //	gLogi("gCanvas") << "mouseMoved" << ", x:" << x << ", y:" << y;
 	if((x - pausecx) * (x - pausecx) + (y - pausecy) * (y - pausecy) <= pauseradius * pauseradius) {
-		pausestate = true;
+		pausebutton.hold = true;
 	}
 	else {
-		pausestate = false;
+		pausebutton.hold = false;
 	}
 }
 
@@ -193,6 +194,11 @@ void gCanvas::mouseDragged(int x, int y, int button) {
 
 void gCanvas::mousePressed(int x, int y, int button) {
 //	gLogi("gCanvas") << "mousePressed" << ", x:" << x << ", y:" << y << ", b:" << button;
+	// Pause Button
+	if(gamestate != GAME_SELECT_MODE && x > (pausebutton.x - (pausebutton.w * 1.25f)) && x < (pausebutton.x + pausebutton.w + (pausebutton.w * 1.25f)) && y > (pausebutton.y - (pausebutton.w * 1.25f)) && y < (pausebutton.y + pausebutton.h + (pausebutton.w * 1.25f))) {
+		pausebutton.hold = true;
+	}
+	//
 	for(int i = 0; i < BUTTON_COUNT; i++) {
 		if(x > buttoncoordinategroup[i].x && x < (buttoncoordinategroup[i].x + buttoncoordinategroup[i].w) && y > buttoncoordinategroup[i].y && y < (buttoncoordinategroup[i].y + (buttoncoordinategroup[i].h / 2))) {
 			buttoncoordinategroup[i].hold = true;
@@ -213,7 +219,6 @@ void gCanvas::mousePressed(int x, int y, int button) {
 		if(gamestate == GAME_OPTIONS && x > slider[i].x && x < slider[i].x + slider[i].w && y > slider[i].y && y < slider[i].y + slider[i].h){
 			sliderselected[i] = true;
 			if(musicstate) root->clicksound.play();
-			gLogi("Slider týklandý");
 		}
 	}
 
@@ -223,9 +228,11 @@ void gCanvas::mousePressed(int x, int y, int button) {
 	}
 
 	// Mode panel button
-	for(int i = 0; i < maxplayernum; i++) {
-		if(gamestate == GAME_SELECT_MODE && x > modebutton[i].x && x < (modebutton[i].x + modebutton[i].w) && y > modebutton[i].y && y < (modebutton[i].y + modebutton[i].h / 2)) {
-			modebutton[i].hold = true;
+	if(gamestate == GAME_SELECT_MODE) {
+		for(int i = 0; i < maxplayernum; i++) {
+			if(gamestate == GAME_SELECT_MODE && x > modebutton[i].x && x < (modebutton[i].x + modebutton[i].w) && y > modebutton[i].y && y < (modebutton[i].y + modebutton[i].h / 2)) {
+				modebutton[i].hold = true;
+			}
 		}
 	}
 }
@@ -249,7 +256,7 @@ void gCanvas::mouseReleased(int x, int y, int button) {
 //----- The codes above is for control purposes.
 
 	// Pause Button
-	if(gamestate != GAME_SELECT_MODE && pausebutton.hold) {
+	if(pausebutton.hold) {
 		if(gamestate != GAME_PAUSE) gamestate = GAME_PAUSE;
 		else gamestate = GAME_START;
 		if(musicstate) root->clicksound.play();
@@ -345,42 +352,41 @@ void gCanvas::mouseReleased(int x, int y, int button) {
 	for(int i = 0; i < BUTTON_COUNT; i++) {
 		if(buttoncoordinategroup[i].hold) buttoncoordinategroup[i].hold = false;
 	}
-	for(int i = 0; i < OPTIONS_BUTTON_COUNT; i++) {
-		if(opbuttonselected[i]) opbuttonselected[i] = false;
+	if(gamestate == GAME_OPTIONS) {
+		for(int i = 0; i < OPTIONS_BUTTON_COUNT; i++) {
+			if(opbuttonselected[i]) opbuttonselected[i] = false;
+		}
 	}
 
-	for(int i = 0; i < maxplayernum; i++) {
-		if(modebutton[i].hold) {
-			if(gamemode == MODE_NONE) {
-				if(i == MODE_PVP) {
-					gamemode = MODE_PVP;
-					gamestate = GAME_START;
+	// Gamemode select
+	if(gamestate == GAME_SELECT_MODE) {
+		for(int i = 0; i < maxplayernum; i++) {
+			if(modebutton[i].hold) {
+				modebutton[i].hold = false;
+				if(gamemode == MODE_PVE) {
+					if(i == PLAYER_LEFT) {
+						// Select game mode and start pvp game.
+						selectPlayerPosition(PLAYER_LEFT);
+					}
+					if(i == PLAYER_RIGHT) {
+						// Select game mode and guide to choose position.
+						selectPlayerPosition(PLAYER_RIGHT);
+					}
 				}
-				else if(i == MODE_PVE) {
-					gamemode = MODE_PVE;
-					gamestate = GAME_START;
-
-					selecttext[0] = "Player Left";
-					selecttext[1] = "Player Right";
+				if(gamemode == MODE_NONE) {
+					if(i == MODE_PVP) {
+						// Select game mode and start pvp game.
+						gamemode = MODE_PVP;
+						gamestate = GAME_START;
+					}
+					if(i == MODE_PVE) {
+						// Select game mode and guide to choose position.
+						gamemode = MODE_PVE;
+						selecttext[PLAYER_LEFT] = "Player Left";
+						selecttext[PLAYER_RIGHT] = "Player Right";
+					}
 				}
 			}
-			if(gamemode == MODE_PVE) {
-				if(i == 0) {
-					modebutton[i].hold = false;
-					gamemode = MODE_PVP;
-					gamestate = GAME_START;
-				}
-				else {
-					modebutton[i].hold = false;
-					gamemode = MODE_PVE;
-					gamestate = GAME_START;
-				}
-			}
-
-			selectGameMode(gamestate, 0);
-			resetBall();
-
-			modebutton[i].hold = false;
 		}
 	}
 }
@@ -561,9 +567,9 @@ void gCanvas::setupGoalEvent() {
 }
 
 void gCanvas::setupPauseMenu() {
-	button[0].loadImage("futbolassets/btn_round_again.png");
-	button[1].loadImage("futbolassets/btn_round_home.png");
-	button[2].loadImage("futbolassets/btn_round_options.png");
+	menubutton[0].loadImage("futbolassets/btn_round_again.png");
+	menubutton[1].loadImage("futbolassets/btn_round_home.png");
+	menubutton[2].loadImage("futbolassets/btn_round_options.png");
 
 	// Pause Button
 	pausebuttonimg.loadImage("futbolassets/btn_pause.png");
@@ -593,14 +599,14 @@ void gCanvas::setupPauseMenu() {
 
 
 	for(int i = 0; i < BUTTON_COUNT; i++) {
-		buttoncoordinategroup[i].w = button[i].getWidth() / 1.5f;
-		buttoncoordinategroup[i].h = button[i].getHeight() / 1.5f;
+		buttoncoordinategroup[i].w = menubutton[i].getWidth() / 1.5f;
+		buttoncoordinategroup[i].h = menubutton[i].getHeight() / 1.5f;
 		buttoncoordinategroup[i].x = boardx + ((boardw / 2) - (buttoncoordinategroup[i].w * 1.65f)) + ((buttoncoordinategroup[i].w * i) * 1.15f);
 		buttoncoordinategroup[i].y = boardy + ((boardh / 2) - (buttoncoordinategroup[i].h / 4));
-		buttoncoordinategroup[i].sw = button[i].getWidth();
-		buttoncoordinategroup[i].sh = button[i].getWidth();
+		buttoncoordinategroup[i].sw = menubutton[i].getWidth();
+		buttoncoordinategroup[i].sh = menubutton[i].getWidth();
 		buttoncoordinategroup[i].sx = 0;
-		buttoncoordinategroup[i].sy = button[i].getHeight() / 2;
+		buttoncoordinategroup[i].sy = menubutton[i].getHeight() / 2;
 		buttoncoordinategroup[i].hold = false;
 	}
 }
@@ -719,14 +725,14 @@ void gCanvas::setupGameEndPanel() {
 	endboardheadery = boardy + (boardheaderh * 1.4f);
 
 	for(int i = 0; i < BUTTON_COUNT - 1; i++) {
-		buttonendcoordinategroup[i].w = button[i].getWidth() / 1.5f;
-		buttonendcoordinategroup[i].h = button[i].getHeight() / 1.5f;
+		buttonendcoordinategroup[i].w = menubutton[i].getWidth() / 1.5f;
+		buttonendcoordinategroup[i].h = menubutton[i].getHeight() / 1.5f;
 		buttonendcoordinategroup[i].x = boardx + ((boardw / 2) - (buttoncoordinategroup[i].w * 1.65f)) + ((buttoncoordinategroup[i].w * i) * 1.15f);
 		buttonendcoordinategroup[i].y = boardy + ((boardh / 2) - (buttoncoordinategroup[i].h / 4));
-		buttonendcoordinategroup[i].sw = button[i].getWidth();
-		buttonendcoordinategroup[i].sh = button[i].getWidth();
+		buttonendcoordinategroup[i].sw = menubutton[i].getWidth();
+		buttonendcoordinategroup[i].sh = menubutton[i].getWidth();
 		buttonendcoordinategroup[i].sx = 0;
-		buttonendcoordinategroup[i].sy = button[i].getHeight() / 2;
+		buttonendcoordinategroup[i].sy = menubutton[i].getHeight() / 2;
 		buttonendcoordinategroup[i].hold = false;
 	}
 }
@@ -837,12 +843,12 @@ void gCanvas::drawWaitEvent() {
 }
 
 void gCanvas::drawPauseMenu() {
-	if(pausestate) renderer->setColor(161, 102, 47);
+	if(pausebutton.hold) renderer->setColor(161, 102, 47);
 	else renderer->setColor(181, 122, 67);
 	gDrawCircle(pausecx, pausecy, pauseradius, true);
 	renderer->setColor(255, 255, 255);
 
-	if(pausestate) renderer->setColor(0, 200, 0);
+	if(pausebutton.hold) renderer->setColor(0, 200, 0);
 	pausebuttonimg.draw(pausebutton.x, pausebutton.y, pausebutton.w, pausebutton.h);
 	renderer->setColor(255, 255, 255);
 
@@ -855,7 +861,7 @@ void gCanvas::drawPauseMenu() {
 	if(gamestate == GAME_PAUSE) {
 		boardtext = "Paused";
 		for(int i = 0; i < BUTTON_COUNT; i++) {
-			button[i].drawSub(buttoncoordinategroup[i].x, buttoncoordinategroup[i].y, buttoncoordinategroup[i].w, buttoncoordinategroup[i].w,
+			menubutton[i].drawSub(buttoncoordinategroup[i].x, buttoncoordinategroup[i].y, buttoncoordinategroup[i].w, buttoncoordinategroup[i].w,
 						buttoncoordinategroup[i].sx, buttoncoordinategroup[i].sy * buttoncoordinategroup[i].hold, buttoncoordinategroup[i].sw, buttoncoordinategroup[i].sh);
 		}
 	}
@@ -894,7 +900,7 @@ void gCanvas::drawGameEndPanel() {
 	boardfont.drawText(boardtext, endboardheaderx + ((endboardheaderw - boardfont.getStringWidth(boardtext)) / 2) , endboardheadery + ((endboardheaderh - boardfont.getStringHeight(boardtext)) / 1.15f));
 
 	for(int i = 0; i < (BUTTON_COUNT - 1); i++) {
-		button[i].drawSub(buttonendcoordinategroup[i].x + (buttonendcoordinategroup[i].w / 2), buttonendcoordinategroup[i].y + endboardheaderh, buttonendcoordinategroup[i].w, buttonendcoordinategroup[i].w,
+		menubutton[i].drawSub(buttonendcoordinategroup[i].x + (buttonendcoordinategroup[i].w / 2), buttonendcoordinategroup[i].y + endboardheaderh, buttonendcoordinategroup[i].w, buttonendcoordinategroup[i].w,
 				buttonendcoordinategroup[i].sx, buttonendcoordinategroup[i].sy * buttonendcoordinategroup[i].hold, buttonendcoordinategroup[i].sw, buttonendcoordinategroup[i].sh);
 	}
 
@@ -1350,15 +1356,17 @@ void gCanvas::goalEvent(int whoscored) {
 	else gamestate = GAME_GOAL;
 }
 
-void gCanvas::selectGameMode(int gamemode, int playerpos) {
-    if (gamemode == MODE_PVP) {
-        isuserleft = false;
-        isuserright = false;
-    }
-    if (gamemode == MODE_PVE) {
+void gCanvas::selectPlayerPosition(int playerpos) {
+	if(playerpos == PLAYER_LEFT) {
     	isuserleft = true;
         isuserright = false;
-    }
+	}
+	if(playerpos == PLAYER_RIGHT) {
+    	isuserleft = false;
+        isuserright = true;
+	}
+	gamestate = GAME_START;
+	resetBall();
 }
 
 void gCanvas::sliderControl() {

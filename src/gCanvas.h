@@ -155,7 +155,7 @@ private:
     void generateGoalPostsLight(int goalpostslightx, int goalpostslighty, int goalpostslightw, int goalpostslighth);
     void waitEvent();
     void goalEvent(int whoscored);
-	void selectGameMode(int gamemode, int playerpos);
+	void selectPlayerPosition(int playerpos = PLAYER_LEFT);
 
 	void sliderControl();
     void soundControl(bool musicvalue);
@@ -266,24 +266,23 @@ private:
 
 	// UI
 
-	gImage button[BUTTON_COUNT];
+	gImage menubutton[BUTTON_COUNT];
 
-	struct ButtonCoordinates {
+	struct Button {
 		int x, y, w, h;
 		int sx, sy, sw, sh;
 		bool state;
 		bool hold;
 	};
 
-	ButtonCoordinates buttoncoordinategroup[BUTTON_COUNT];
-	ButtonCoordinates buttonendcoordinategroup[BUTTON_COUNT];
-	ButtonCoordinates opbutton[OPTIONS_BUTTON_COUNT];
-	ButtonCoordinates modebutton[maxplayernum];
-	ButtonCoordinates pausebutton;
+	Button buttoncoordinategroup[BUTTON_COUNT];
+	Button buttonendcoordinategroup[BUTTON_COUNT];
+	Button opbutton[OPTIONS_BUTTON_COUNT];
+	Button modebutton[maxplayernum];
+	Button pausebutton;
 
 	gImage pausebuttonimg;
-	int pausebuttonx, pausebuttony, pausebuttonw, pausebuttonh, pausestate;
-	int pausecx, pausecy, pauseradius;
+	int pausecx, pausecy, pauseradius; // for circle collision control
 
 	gImage pausebuttonbackground;
 	int pausebuttonbgx, pausebuttonbgy, pausebuttonbgw, pausebuttonbgh;
