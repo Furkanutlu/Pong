@@ -56,23 +56,7 @@ void gCanvas::keyPressed(int key) {
 	        resetBall();
 	    }
     if (key == 32) {
-        if (ismoving) {
-
-            savedvelocityx = ball.velocityx;
-            savedvelocityy = ball.velocityy;
-            savedballframe = ballcurrentframe;
-            savedballframetimer = ballframetimer;
-            ball.velocityx = 0;
-            ball.velocityy = 0;
-            ismoving = false;
-        } else {
-
-            ball.velocityx = savedvelocityx;
-            ball.velocityy = savedvelocityy;
-            ballcurrentframe = savedballframe;
-            ballframetimer = savedballframetimer;
-            ismoving = true;
-        }
+        startBall();
     }
     // Mod seçimi
     if (gameState == 0) {
@@ -287,16 +271,7 @@ void gCanvas::setupBall() {
 	ball.y = getHeight() / 2;
 	speed = 10.0f;
 	maxspeed = 15.0f;
-	angle = gRandom(360) * (M_PI / 180); //ilk yonu ve hizi
-	ball.velocityx = cos(angle) * speed;
-	ball.velocityy = sin(angle) * speed;
-	savedvelocityx = ball.velocityx;
-	savedvelocityy = ball.velocityy;
-	ismoving = false;
-	ishitanimating = false;
-	ball.radius = ball.h / 2;
-	ballcurrentframe = 0;
-	ballframetimer = 0.0f;
+	resetBall();
 
 }
 void gCanvas::setupMaphitbox() {
@@ -523,14 +498,35 @@ void gCanvas::checkGoal() {
 	    }
 }
 void gCanvas::resetBall() {
+
     ball.x = getWidth() / 2;
     ball.y = getHeight() / 2;
-	angle = gRandom(360) * (M_PI / 180);
-	savedvelocityx = cos(angle) * speed;
-	savedvelocityy = sin(angle) * speed;
+
+    angle = gRandom(360) * (M_PI / 180);
+    savedvelocityx = cos(angle) * speed;
+    savedvelocityy = sin(angle) * speed;
     ball.velocityx = 0;
     ball.velocityy = 0;
-    ismoving = false; // Top durdu
+    savedballframe = 0;
+    savedballframetimer = 0;
+    ismoving = false;
+}
+void gCanvas::startBall() {
+    if (ismoving) {
+        savedvelocityx = ball.velocityx;
+        savedvelocityy = ball.velocityy;
+        savedballframe = ballcurrentframe;
+        savedballframetimer = ballframetimer;
+        ball.velocityx = 0;
+        ball.velocityy = 0;
+        ismoving = false;
+    } else {
+        ball.velocityx = savedvelocityx;
+        ball.velocityy = savedvelocityy;
+        ballcurrentframe = savedballframe;
+        ballframetimer = savedballframetimer;
+        ismoving = true;
+    }
 }
 bool gCanvas::checkPostCollision(Ball& ball, Post& post) {
 	// top ve direk arasi mesafe
