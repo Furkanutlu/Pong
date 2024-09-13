@@ -1,13 +1,12 @@
 /*
 * gCanvas.cpp
 *
-*  Created on: September 6, 2024
-*      Author: Kadir Semih Arslan && Mehmet Furkan Utlu
+*  Created on: May 6, 2020
+*      Author: noyan
 */
 
 
 #include "gCanvas.h"
-#include "menuCanvas.h"
 
 
 gCanvas::gCanvas(gApp* root) : gBaseCanvas(root) {
@@ -18,377 +17,180 @@ gCanvas::~gCanvas() {
 }
 
 void gCanvas::setup() {
-	soundControl(0); // This line will be deleted later.
-	gamestate = GAME_SELECT_MODE;
-	gamemode = MODE_NONE;
+	difficulty = 1;
+    ismovingupleft = false;
+    ismovingdownleft = false;
+    ismovingupright = false;
+    ismovingdownright = false;
+
+	setupGame();
 	setupMap();
 	setupGoal();
-	setupScore();
 	setupBall();
-	setupPuds();
 	setupMaphitbox();
-	setupGoalPostsLight();
-	setupPauseMenu();
-	setupGoalEvent();
-	setupOptionsMenu();
-	setupGameEndPanel();
-	setupGameMode();
+	setupPuds();
+
 }
 void gCanvas::update() {
-	if(gamestate == GAME_START) {
-		updateBallPosition();
-		updateScore();
-		updateHitAnimating();
-		updatePudAnimating();
-		updateBot();
-		updatePudControl();
-	}
-
-	if(gamestate == GAME_GOAL) {
-		updateGoalEvent();
-		updateGoalPostsLight();
-	}
-
-	if(gamestate == GAME_WAIT) waitEvent();
+	updateBallPosition();
+	updateHitAnimating();
+	updatePudAnimating();
+	updateBot();
+	updatePudControl();
 }
 
 void gCanvas::draw() {
 	//logo.draw((getWidth() - logo.getWidth()) / 2, (getHeight() - logo.getHeight()) / 2);
 	drawMap();
-	drawBall();
 	drawGoal();
 	drawPuds();
 	drawHit();
-	drawScore();
-	drawGoalPostsLight();
-	drawPauseMenu();
-	if(gamestate == GAME_GOAL) drawGoalEvent();
-	if(gamestate == GAME_WAIT) drawWaitEvent();
-	if(gamestate == GAME_OPTIONS) drawOptionsMenu();
-	if(gamestate == GAME_SELECT_MODE) drawGameMode();
-	if(gamestate == GAME_LOSE || gamestate == GAME_WIN) drawGameEndPanel();
+	drawBall();
 	//gDrawRectangle(pudleft.x, pudleft.y + 10, pudleft.w, pudleft.h - 20, false);
 	//gDrawRectangle(gamelinelimitx[0], gamelinelimity[0], gamelinelimitx[1], gamelinelimity[1], true);
 }
 
 void gCanvas::keyPressed(int key) {
-	//gLogi("gCanvas") << "keyPressed:" << key;
+//gLogi("gCanvas") << "keyPressed:" << key;
 	if (key == 82) {
-			resetBall();
-		}
-	if (key == 32) {
-		if (ismoving) {
-			savedvelocityx = ball.velocityx;
-			savedvelocityy = ball.velocityy;
-			savedballframe = ballcurrentframe;
-			savedballframetimer = ballframetimer;
-			ball.velocityx = 0;
-			ball.velocityy = 0;
-			ismoving = false;
-		} else {
-			ball.velocityx = savedvelocityx;
-			ball.velocityy = savedvelocityy;
-			ballcurrentframe = savedballframe;
-			ballframetimer = savedballframetimer;
-			ismoving = true;
-		}
-	}
-	if (key == '1') {
-		isuserleft = true;
-		isuserright = false;
-	}
-	if (key == '2') {
-		isuserleft = false;
-		isuserright = true;
-	}
-	if (key == 265 || key == 87) {
-	   if (isuserright) {
-		   ismovingupright = true;
-	   } else if (isuserleft) {
-		   ismovingupleft = true;
-	   }
-   }
-   if (key == 264 || key == 83) {
-	   if (isuserright) {
-		   ismovingdownright = true;
-	   } else if (isuserleft) {
-		   ismovingdownleft = true;
-	   }
-   }
+	        resetBall();
+	    }
+    if (key == 32) {
+        if (ismoving) {
+
+            savedvelocityx = ball.velocityx;
+            savedvelocityy = ball.velocityy;
+            savedballframe = ballcurrentframe;
+            savedballframetimer = ballframetimer;
+            ball.velocityx = 0;
+            ball.velocityy = 0;
+            ismoving = false;
+        } else {
+
+            ball.velocityx = savedvelocityx;
+            ball.velocityy = savedvelocityy;
+            ballcurrentframe = savedballframe;
+            ballframetimer = savedballframetimer;
+            ismoving = true;
+        }
+    }
+    // Mod seçimi
+    if (gameState == 0) {
+        if (key == '1') {
+            isPvP = true;
+            isPvE = false;
+            gameState = 2;
+        } else if (key == '2') {
+            isPvP = false;
+            isPvE = true;
+            gameState = 1;
+        }
+    }
+
+    else if (gameState == 1) {
+        if (key == '1') {
+            isuserleft = true;
+            isuserright = false;
+            gameState = 2;
+        } else if (key == '2') {
+            isuserleft = false;
+            isuserright = true;
+            gameState = 2;
+        }
+    }
+    // Oyun oynama
+    else if (gameState == 2) {
+        if (isPvP) {
+
+            if (key == 265) ismovingupright = true; // Up arrow
+            if (key == 264) ismovingdownright = true; // Down arrow
+            if (key == 87) ismovingupleft = true; // 'W'
+            if (key == 83) ismovingdownleft = true; // 'S'
+        } else if (isPvE) {
+
+            if (isuserleft) {
+                if (key == 87) ismovingupleft = true; // 'W'
+                if (key == 83) ismovingdownleft = true; // 'S'
+            } else if (isuserright) {
+                if (key == 265) ismovingupright = true; // Up arrow
+                if (key == 264) ismovingdownright = true; // Down arrow
+            }
+        }
+    }
+
 }
 void gCanvas::keyReleased(int key) {
 //	gLogi("gCanvas") << "keyReleased:" << key;
-	if (key == 265 || key == 87) { // Up arrow or 'W'
-		if (isuserright) {
-			ismovingupright = false;
-		} else if (isuserleft) {
-			ismovingupleft = false;
-		}
-	}
-	if (key == 264 || key == 83) { // Down arrow or 'S'
-		if (isuserright) {
-			ismovingdownright = false;
-		} else if (isuserleft) {
-			ismovingdownleft = false;
-		}
-	}
+    if (gameState == 2) {
+        if (isPvP) {
+            if (key == 265) ismovingupright = false; // Up arrow
+            if (key == 264) ismovingdownright = false; // Down arrow
+            if (key == 87) ismovingupleft = false; // 'W'
+            if (key == 83) ismovingdownleft = false; // 'S'
+        } else if (isPvE) {
+            if (isuserleft) {
+                if (key == 87) ismovingupleft = false; // 'W'
+                if (key == 83) ismovingdownleft = false; // 'S'
+            } else if (isuserright) {
+                if (key == 265) ismovingupright = false; // Up arrow
+                if (key == 264) ismovingdownright = false; // Down arrow
+            }
+        }
+    }
 }
 
 void gCanvas::charPressed(unsigned int codepoint) {
 //	gLogi("gCanvas") << "charPressed:" << gCodepointToStr(codepoint);
+
 }
 
 void gCanvas::mouseMoved(int x, int y) {
 //	gLogi("gCanvas") << "mouseMoved" << ", x:" << x << ", y:" << y;
-	if((x - pausecx) * (x - pausecx) + (y - pausecy) * (y - pausecy) <= pauseradius * pauseradius) {
-		pausebutton.hold = true;
-	}
-	else {
-		pausebutton.hold = false;
-	}
 }
 
 void gCanvas::mouseDragged(int x, int y, int button) {
-//	gLogi("gCanvas") << "mouseDragged" << ", x:" << x << ", y:" << y << ", b:" << button;
+//	if (button == MOUSEBUTTON_LEFT) {
+//	currentmousey = y;
+//
+//		        if (x < getWidth() / 2) {
+//		            pudleft.y = currentmousey - pudleft.h / 2;
+//
+//		            pudleft.y = std::max(pudleft.y, 115.0f);
+//		            pudleft.y = std::min(pudleft.y, 600 - pudleft.h);
+//
+//		    	    if (currentmousey != prevmouseyleft) {
+//		    	        pudleft.velocityy = currentmousey - prevmouseyleft;
+//		    	    } else {
+//		    	        pudleft.velocityy = 0;
+//		    	    }
+//
+//		            prevmouseyleft = currentmousey;
+//		        } else {
+//		            pudright.y = currentmousey - pudright.h / 2;
+//
+//		            pudright.y = std::max(pudright.y, 115.0f);
+//		            pudright.y = std::min(pudright.y, 600 - pudright.h);
+//		    	    if (currentmousey != prevmouseyright) {
+//		    	        pudright.velocityy = currentmousey - prevmouseyright;
+//		    	    } else {
+//		    	        pudright.velocityy = 0;
+//		    	    }
+//		            prevmouseyright = currentmousey;
+//		        }
+//	    }
 
-	// Options sliders
-	for(int i = 0; i < OPTIONS_COUNT; i++) {
-		if(i != SLIDER_VIBRATION && sliderselected[i]) {
-			if(slider[i].x >= sliderminx[i] && slider[i].x <= slidermaxx[i]) slider[i].x = x;
-			if(slider[i].x < sliderminx[i]) slider[i].x = sliderminx[i];
-			if(slider[i].x > slidermaxx[i]) slider[i].x = slidermaxx[i];
-		}
-	}
-
-	// Pud Control
-	if(gamestate == GAME_START) {
-		if (button == MOUSEBUTTON_LEFT) {
-			currentmousey = y;
-			if (x < getWidth() / 2) {
-				pudleft.y = currentmousey - pudleft.h / 2;
-
-				pudleft.y = std::max(pudleft.y, 115.0f);
-				pudleft.y = std::min(pudleft.y, 600 - pudleft.h);
-
-				if (currentmousey != prevmouseyleft) {
-					pudleft.velocityy = currentmousey - prevmouseyleft;
-				} else {
-					pudleft.velocityy = 0;
-				}
-				prevmouseyleft = currentmousey;
-			} else {
-				pudright.y = currentmousey - pudright.h / 2;
-
-				pudright.y = std::max(pudright.y, 115.0f);
-				pudright.y = std::min(pudright.y, 600 - pudright.h);
-				if (currentmousey != prevmouseyright) {
-					pudright.velocityy = currentmousey - prevmouseyright;
-				} else {
-					pudright.velocityy = 0;
-				}
-				prevmouseyright = currentmousey;
-			}
-		}
-	}
 }
 
 void gCanvas::mousePressed(int x, int y, int button) {
 //	gLogi("gCanvas") << "mousePressed" << ", x:" << x << ", y:" << y << ", b:" << button;
-	// Pause Button
-	if(gamestate != GAME_SELECT_MODE && x > (pausebutton.x - (pausebutton.w * 1.25f)) && x < (pausebutton.x + pausebutton.w + (pausebutton.w * 1.25f)) && y > (pausebutton.y - (pausebutton.w * 1.25f)) && y < (pausebutton.y + pausebutton.h + (pausebutton.w * 1.25f))) {
-		pausebutton.hold = true;
-	}
-	//
-	for(int i = 0; i < BUTTON_COUNT; i++) {
-		if(x > buttoncoordinategroup[i].x && x < (buttoncoordinategroup[i].x + buttoncoordinategroup[i].w) && y > buttoncoordinategroup[i].y && y < (buttoncoordinategroup[i].y + (buttoncoordinategroup[i].h / 2))) {
-			buttoncoordinategroup[i].hold = true;
-		}
-	}
-
-	// Game End Buttons
-	if(gamestate == GAME_LOSE || gamestate == GAME_WIN) {
-		for(int i = 0; i < BUTTON_COUNT - 1; i++) {
-			if(x > (buttonendcoordinategroup[i].x + (buttonendcoordinategroup[i].w / 2)) && x < (((buttonendcoordinategroup[i].x + (buttonendcoordinategroup[i].w / 2))) + buttonendcoordinategroup[i].w) && y > (buttonendcoordinategroup[i].y + endboardheaderh) && y < ((buttonendcoordinategroup[i].y + endboardheaderh) + (buttonendcoordinategroup[i].h / 2))) {
-				buttonendcoordinategroup[i].hold = true;
-			}
-		}
-	}
-
-	// Slider press control
-	for(int i = 0; i < OPTIONS_COUNT; i++) {
-		if(gamestate == GAME_OPTIONS && x > slider[i].x && x < slider[i].x + slider[i].w && y > slider[i].y && y < slider[i].y + slider[i].h){
-			sliderselected[i] = true;
-			if(musicstate) root->clicksound.play();
-		}
-	}
-
-	// Option button
-	if(x > opbutton[ACCEPT_BUTTON].x && x < (opbutton[ACCEPT_BUTTON].x + opbutton[ACCEPT_BUTTON].w) && y > opbutton[ACCEPT_BUTTON].y && y < (opbutton[ACCEPT_BUTTON].y + opbutton[ACCEPT_BUTTON].h)) {
-		opbutton[ACCEPT_BUTTON].state = true;
-	}
-
-	// Mode panel button
-	if(gamestate == GAME_SELECT_MODE) {
-		for(int i = 0; i < maxplayernum; i++) {
-			if(gamestate == GAME_SELECT_MODE && x > modebutton[i].x && x < (modebutton[i].x + modebutton[i].w) && y > modebutton[i].y && y < (modebutton[i].y + modebutton[i].h / 2)) {
-				modebutton[i].hold = true;
-			}
-		}
-	}
 }
 
 void gCanvas::mouseReleased(int x, int y, int button) {
 //	gLogi("gCanvas") << "mouseReleased" << ", button:" << button;
-
-//----- The codes below is for control purposes.
-
-//	gLogi("gCanvas") << "mouseReleased" << ", button:" << button;
-
-//	if(button == 0) goalEvent(PLAYER_RIGHT);
-//	else goalEvent(PLAYER_LEFT);
-
-//	if(button == 0) gamestate = GAME_GOAL;
-//	if(button == 1) gamestate = GAME_LOSE;
-//	else gamestate = GAME_WIN;
-
-//	gLogi("FrameX ") << std::to_string(score[PLAYER_LEFT] % scorenumberscolumncol) << " FrameY " << std::to_string(score[PLAYER_LEFT] / scorenumberscolumncol);
-
-//----- The codes above is for control purposes.
-
-	// Pause Button
-	if(pausebutton.hold) {
-		if(gamestate != GAME_PAUSE) gamestate = GAME_PAUSE;
-		else gamestate = GAME_START;
-		if(musicstate) root->clicksound.play();
-	}
-
-	// Pause Options Buttons düzenleniyor
-	if(gamestate == GAME_PAUSE) {
-		for(int i = 0; i < BUTTON_COUNT; i++) {
-			if(buttoncoordinategroup[i].hold) {
-				if(i == BUTTON_REPLAY) {
-					if(musicstate) root->clicksound.play(); // If this code is not here, there will be no sound.
-					buttoncoordinategroup[i].state = true;
-					gCanvas* replay = new gCanvas(root);
-					appmanager->setCurrentCanvas(replay);
-				}
-				if(i == BUTTON_HOME) {
-					menuCanvas* main = new menuCanvas(root);
-					appmanager->setCurrentCanvas(main);
-				}
-				if(i == BUTTON_OPTIONS) {
-					gamestate = GAME_OPTIONS;
-					if(musicstate) root->clicksound.play();
-				}
-				buttoncoordinategroup[i].hold = false;
-			}
-		}
-	}
-	// Game End Buttons
-	if(gamestate == GAME_LOSE || gamestate == GAME_WIN) {
-		for(int i = 0; i < BUTTON_COUNT; i++) {
-			if(buttonendcoordinategroup[i].hold) {
-				if(i == BUTTON_REPLAY) {
-					if(musicstate) root->clicksound.play(); // If this code is not here, there will be no sound.
-					buttoncoordinategroup[i].state = true;
-					gCanvas* replay = new gCanvas(root);
-					appmanager->setCurrentCanvas(replay);
-				}
-				if(i == BUTTON_HOME) {
-					menuCanvas* main = new menuCanvas(root);
-					appmanager->setCurrentCanvas(main);
-				}
-
-				if(musicstate) root->clicksound.play();
-			}
-		}
-	}
-
-	// Slider release control
-	for(int i = 0; i < OPTIONS_COUNT; i++) {
-		if(sliderselected[i]) {
-			sliderselected[i] = false;
-
-			if(i == SLIDER_DIFFICULTY) {
-				// If you release the slider it will send its data to the database.
-				difficultyvalue = normalizeSlider(sliderminx[i], slidermaxx[i], slider[i].x);
-				updateSettingsDatabase("difficultystate", difficultyvalue);
-			}
-			if(i == SLIDER_MUSIC) {
-				// If you release the slider it will send its data to the database.
-				musicvalue = normalizeSlider(sliderminx[i], slidermaxx[i], slider[i].x);
-				updateSettingsDatabase("musicstate", musicvalue);
-			}
-			if(i == SLIDER_VIBRATION) {
-				// If you release the slider it will check it and send its data to the database.
-				if(slider[i].x <= sliderminx[i]) {
-					slider[i].x = slidermaxx[i];
-				}
-				else {
-					slider[i].x = sliderminx[i];
-				}
-
-				vibrationvalue = sliderselected[i];
-				updateSettingsDatabase("vibrationstate", vibrationvalue);
-			}
-
-			sliderControl();
-		}
-	}
-
-	// Option button
-
-	if(opbutton[ACCEPT_BUTTON].state) {
-		opbutton[ACCEPT_BUTTON].state = false;
-		gamestate = GAME_PAUSE;
-	}
-
-	// Pud idk
-    if (button == MOUSEBUTTON_LEFT) {
-        pudleft.velocityy = 0;
-        pudright.velocityy = 0;
-    }
-
-	for(int i = 0; i < BUTTON_COUNT; i++) {
-		if(buttoncoordinategroup[i].hold) buttoncoordinategroup[i].hold = false;
-	}
-	if(gamestate == GAME_OPTIONS) {
-		for(int i = 0; i < OPTIONS_BUTTON_COUNT; i++) {
-			if(opbuttonselected[i]) opbuttonselected[i] = false;
-		}
-	}
-
-	// Gamemode select
-	if(gamestate == GAME_SELECT_MODE) {
-		for(int i = 0; i < maxplayernum; i++) {
-			if(modebutton[i].hold) {
-				modebutton[i].hold = false;
-				if(gamemode == MODE_PVE) {
-					if(i == PLAYER_LEFT) {
-						// Select game mode and start pvp game.
-						selectPlayerPosition(PLAYER_LEFT);
-					}
-					if(i == PLAYER_RIGHT) {
-						// Select game mode and guide to choose position.
-						selectPlayerPosition(PLAYER_RIGHT);
-					}
-				}
-				if(gamemode == MODE_NONE) {
-					if(i == MODE_PVP) {
-						// Select game mode and start pvp game.
-						gamemode = MODE_PVP;
-						gamestate = GAME_START;
-					}
-					if(i == MODE_PVE) {
-						// Select game mode and guide to choose position.
-						gamemode = MODE_PVE;
-						selecttext[PLAYER_LEFT] = "Player Left";
-						selecttext[PLAYER_RIGHT] = "Player Right";
-					}
-				}
-			}
-		}
-	}
+//    if (button == MOUSEBUTTON_LEFT) {
+//        pudleft.velocityy = 0;
+//        pudright.velocityy = 0;
+//    }
 }
 
 void gCanvas::mouseScrolled(int x, int y) {
@@ -415,6 +217,15 @@ void gCanvas::hideNotify() {
 
 }
 
+
+void gCanvas::setupGame(){
+	int gameState = 0;  // Oyun durumu (0: mod secimi, 1: taraf secimi, 2: oyun oynama)
+
+	bool isPvP = false;
+	bool isPvE = false;
+	bool isuserleft = false;
+	bool isuserright = false;
+}
 void gCanvas::setupMap() {
 //	aspectx = (float)map[0].getWidth() / getWidth();
 //	aspecty = (float)map[0].getHeight() / getHeight();
@@ -436,6 +247,7 @@ void gCanvas::setupMap() {
 	mapcenterlineh = mapcenterline.getHeight() - 91;
 	mapcenterlinex = (getWidth() - mapcenterlinew) / 2 ;
 	mapcenterliney = (getHeight() - mapcenterlineh) / 2 - 3;
+
 }
 
 void gCanvas::setupGoal() {
@@ -459,6 +271,7 @@ void gCanvas::setupGoal() {
 	goalpostright[ALT_DIREK] = {1150, 515, 25};
 	ustdirek = 200;
 	altdirek = 515;
+
 }
 void gCanvas::setupBall() {
 	//frame ve hiz
@@ -484,6 +297,7 @@ void gCanvas::setupBall() {
 	ball.radius = ball.h / 2;
 	ballcurrentframe = 0;
 	ballframetimer = 0.0f;
+
 }
 void gCanvas::setupMaphitbox() {
 	gamelinelimitx[0] = 150;
@@ -498,259 +312,24 @@ void gCanvas::setupMaphitbox() {
 	goalyend = 520;
 }
 void gCanvas::setupPuds() {
-	score[PLAYER_LEFT] = 0;
-	score[PLAYER_RIGHT] = 0;
 	pudleftimage.loadImage("futbolassets/pud_left.png");
 	pudrightimage.loadImage("futbolassets/pud_right.png");
 
 	pudleft.w = pudleftimage.getWidth() / 5;
 	pudleft.h = pudleftimage.getHeight();
-	pudleft.x = 220;
+	pudleft.x = 150;
 	pudleft.y = (getHeight() - pudleft.h) / 2;
 	pudleft.velocityy = 0;
 	pudanimationactiveleft = false;
 
 	pudright.w = pudrightimage.getWidth() / 5;
 	pudright.h = pudrightimage.getHeight();
-	pudright.x = 1055 - pudright.w;
+	pudright.x = 1125 - pudright.w;
 	pudright.y = (getHeight() - pudright.h) / 2;
 	pudright.velocityy = 0;
 	pudanimationactiveright = false;
-}
-
-void gCanvas::setupScore() {
-	scorenumbers.loadImage("futbolassets/numbers_score.png");
-	scorenumbersrowcol = 4;
-	scorenumberscolumncol = 3;
-	scorenumbersmaxframe = 10;
-
-	scorenumbersframew = scorenumbers.getWidth() / scorenumbersrowcol;
-	scorenumbersframeh = scorenumbers.getHeight() / scorenumberscolumncol;
-
-	int scorecounter = 0;
-	for(int i = 0; i < scorenumberscolumncol; i++) {
-		scorenumbersframey = i * 64;
-		for(int j = 0; j < scorenumbersrowcol; j++) {
-			if(scorecounter < scorenumbersmaxframe) {
-				scorenumbersframex = j * 64;
-				scores[scorecounter].x = scorenumbersframex;
-				scores[scorecounter].y = scorenumbersframey;
-				scorecounter++;
-			}
-		}
-	}
-}
-
-void gCanvas::setupGoalPostsLight() {
-	lightactive = false;
-
-	goalpostslights.loadImage("futbolassets/goal_posts_lights.png");
-	goalpostslightsrowcol = 5;
-	goalpostslightscolumncol = 4;
-
-	goalpostslightsframew = goalpostslights.getWidth() / 5;
-	goalpostslightsframeh = goalpostslights.getHeight() / 4;
-	goalpostslightsmaxframe = 20;
-}
-
-void gCanvas::setupGoalEvent() {
-	goalimage.loadImage("futbolassets/text_goal.png");
-
-	goalimagex = (getWidth() - goalimage.getWidth()) / 2;
-	goalimagey = (getHeight() - goalimage.getHeight()) / 2;
-	goalimagew = goalimage.getWidth();
-	goalimageh = goalimage.getHeight();
-
-	waitcounter = 0;
-	waitnumber = WAIT_SECOND;
-	goalscore = false;
-}
-
-void gCanvas::setupPauseMenu() {
-	menubutton[0].loadImage("futbolassets/btn_round_again.png");
-	menubutton[1].loadImage("futbolassets/btn_round_home.png");
-	menubutton[2].loadImage("futbolassets/btn_round_options.png");
-
-	// Pause Button
-	pausebuttonimg.loadImage("futbolassets/btn_pause.png");
-	pausebutton.w = pausebuttonimg.getWidth();
-	pausebutton.h = pausebuttonimg.getHeight();
-	pausebutton.x = getWidth() - (pausebutton.h * 2);
-	pausebutton.y = pausebutton.h;
-	pausecx =  pausebutton.x + (pausebutton.h / 2);
-	pausecy = pausebutton.y + (pausebutton.h / 2);
-	pauseradius = pausebutton.w * 1.25f;
-
-	// Panel
-	board.loadImage("futbolassets/board.png");
-	boardw = board.getWidth() / 1.4f;
-	boardh = board.getHeight() / 1.4f;
-	boardx = (getWidth() - boardw) / 2;
-	boardy = (getHeight() - boardh) / 2;
-
-	boardheader.loadImage("futbolassets/board_header.png");
-	boardheaderw = boardheader.getWidth() / 1.5f;
-	boardheaderh = boardheader.getHeight() / 1.5f;
-	boardheaderx = boardx + ((boardw - boardheaderw) / 2);
-	boardheadery = boardy + (boardheaderh / 1.5f);
-
-	boardfont.loadFont("FreeSansBold.ttf", 30);
-	boardtext = "Paused";
 
 
-	for(int i = 0; i < BUTTON_COUNT; i++) {
-		buttoncoordinategroup[i].w = menubutton[i].getWidth() / 1.5f;
-		buttoncoordinategroup[i].h = menubutton[i].getHeight() / 1.5f;
-		buttoncoordinategroup[i].x = boardx + ((boardw / 2) - (buttoncoordinategroup[i].w * 1.65f)) + ((buttoncoordinategroup[i].w * i) * 1.15f);
-		buttoncoordinategroup[i].y = boardy + ((boardh / 2) - (buttoncoordinategroup[i].h / 4));
-		buttoncoordinategroup[i].sw = menubutton[i].getWidth();
-		buttoncoordinategroup[i].sh = menubutton[i].getWidth();
-		buttoncoordinategroup[i].sx = 0;
-		buttoncoordinategroup[i].sy = menubutton[i].getHeight() / 2;
-		buttoncoordinategroup[i].hold = false;
-	}
-}
-
-void gCanvas::setupOptionsMenu() {
-	// Get database values from root
-	musicvalue = root->musicvalue;
-	difficultyvalue = root->difficultyvalue;
-	vibrationvalue = root->vibrationvalue;
-
-	// Panel
-	board.loadImage("futbolassets/board.png");
-	boardw = board.getWidth() / 1.4f;
-	boardh = board.getHeight() / 1.4f;
-	boardx = (getWidth() - boardw) / 2;
-	boardy = (getHeight() - boardh) / 2;
-
-	boardheader.loadImage("futbolassets/board_header.png");
-	boardheaderw = boardheader.getWidth() / 1.5f;
-	boardheaderh = boardheader.getHeight() / 1.5f;
-	boardheaderx = boardx + ((boardw - boardheaderw) / 2);
-	boardheadery = boardy + (boardheaderh / 1.5f);
-
-	boardfont.loadFont("FreeSansBold.ttf", 30);
-	boardtext = "Paused";
-
-	optionsicon[0].loadImage("futbolassets/option_icon_difficulty.png");
-	optionsicon[1].loadImage("futbolassets/option_icon_sound.png");
-	optionsicon[2].loadImage("futbolassets/option_icon_vibrations.png");
-
-	sliderbackground.loadImage("futbolassets/slider_bg.png");
-	sliderimg[0].loadImage("futbolassets/slider_off.png");
-	sliderimg[1].loadImage("futbolassets/slider_on.png");
-	opbuttons[ACCEPT_BUTTON].loadImage("futbolassets/btn_round_ok.png");
-
-	optionsfont.loadFont("FreeSansBold.ttf", 18);
-
-	for(int i = 0; i < OPTIONS_COUNT; i++) {
-		optionsimg[i].loadImage("futbolassets/option_" + gToStr(i + 1) + ".png");
-		optionsbg[i].w = optionsimg[i].getWidth() / 1.5f;
-		optionsbg[i].h = optionsimg[i].getHeight() / 1.5f;
-		optionsbg[i].x = boardx + (boardw / 8);
-		optionsbg[i].y = (boardheadery + (boardheaderh * 1.25f)) + (optionsbg[i].h * 1.5f * i);
-
-		opicon[i].w = optionsicon[0].getWidth() / 1.5f;
-		opicon[i].h = optionsicon[0].getHeight() / 1.5f;
-		opicon[i].x = optionsbg[i].x + (opicon[i].w / 2.2f);
-		opicon[i].y = optionsbg[i].y - (opicon[i].h / 6);
-
-		sliderbg[i].w = sliderbackground.getWidth();
-		sliderbg[i].h = sliderbackground.getHeight();
-		sliderbg[i].x = (optionsbg[i].x + optionsbg[i].w) + (sliderbg[i].w / 4);
-		sliderbg[i].y = optionsbg[i].y - (sliderbg[i].h / 6);
-
-
-		sliderminx[i] = sliderbg[i].x + (sliderbg[i].w / 6);
-		slidermaxx[i] = sliderbg[i].x + sliderbg[i].w - (sliderbg[i].w / 3.5f);
-		sliderselected[i] = false;
-
-		slider[i].w = sliderimg[0].getWidth() / 2.5f;
-		slider[i].h = sliderimg[0].getHeight() / 2.5f;
-		slider[i].sw = sliderimg[0].getWidth();
-		slider[i].sh = sliderimg[0].getHeight();
-		slider[i].x = sliderminx[i];
-		slider[i].y = sliderbg[i].y + ((sliderbg[i].h - (slider[i].h / 2)) / 2);
-	}
-	// Text
-	optionstext[0] = "Difficulty";
-	optionstext[1] = "Music";
-	optionstext[2] = "Vibration";
-
-	for(int i = 0; i < OPTIONS_BUTTON_COUNT; i++) {
-		opbutton[i].w = opbuttons[i].getWidth() / 3;
-		opbutton[i].h = opbuttons[i].getHeight() / 3;
-		opbutton[i].y = boardy + (boardh - (opbutton[i].w * 1.35f));
-		opbutton[i].sw = opbuttons[i].getWidth();
-		opbutton[i].sh = opbuttons[i].getHeight() / 2;
-	}
-
-	// Slider
-	sliderselected[SLIDER_DIFFICULTY] = difficultystate;
-	sliderselected[SLIDER_MUSIC] = musicstate;
-	sliderselected[SLIDER_VIBRATION] = vibrationstate;
-
-	updateSliderPosition(SLIDER_DIFFICULTY, difficultyvalue);
-	updateSliderPosition(SLIDER_MUSIC, musicvalue);
-	updateSliderPosition(SLIDER_VIBRATION, vibrationvalue);
-
-	// Panel accept button
-	opbutton[ACCEPT_BUTTON].x = boardx + ((boardw - opbutton[ACCEPT_BUTTON].w) / 2);
-	opbutton[ACCEPT_BUTTON].state = false;
-}
-
-void gCanvas::setupGameEndPanel() {
-	youloseimage.loadImage("futbolassets/text_lose.png");
-	youwinimage.loadImage("futbolassets/text_win.png");
-
-	youloseimagew = youloseimage.getWidth();
-	youloseimageh = youloseimage.getHeight();
-	youloseimagex = (getWidth() - youloseimagew) / 2;
-	youloseimagey = (getHeight() - youloseimageh) / 2;
-
-	youwinimagew = youwinimage.getWidth();
-	youwinimageh = youwinimage.getHeight();
-	youwinimagex = (getWidth() - youwinimagew) / 2;
-	youwinimagey = (getHeight() - youwinimageh) / 2;
-
-	endboardw = board.getWidth() / 1.4f;
-	endboardh = board.getHeight() / 1.4f;
-	endboardx = (getWidth() - boardw) / 2;
-	endboardy = (getHeight() - boardh) / 2;
-
-	endboardheaderw = boardheader.getWidth() / 1.5f;
-	endboardheaderh = boardheader.getHeight() / 1.5f;
-	endboardheaderx = boardx + ((boardw - boardheaderw) / 2);
-	endboardheadery = boardy + (boardheaderh * 1.4f);
-
-	for(int i = 0; i < BUTTON_COUNT - 1; i++) {
-		buttonendcoordinategroup[i].w = menubutton[i].getWidth() / 1.5f;
-		buttonendcoordinategroup[i].h = menubutton[i].getHeight() / 1.5f;
-		buttonendcoordinategroup[i].x = boardx + ((boardw / 2) - (buttoncoordinategroup[i].w * 1.65f)) + ((buttoncoordinategroup[i].w * i) * 1.15f);
-		buttonendcoordinategroup[i].y = boardy + ((boardh / 2) - (buttoncoordinategroup[i].h / 4));
-		buttonendcoordinategroup[i].sw = menubutton[i].getWidth();
-		buttonendcoordinategroup[i].sh = menubutton[i].getWidth();
-		buttonendcoordinategroup[i].sx = 0;
-		buttonendcoordinategroup[i].sy = menubutton[i].getHeight() / 2;
-		buttonendcoordinategroup[i].hold = false;
-	}
-}
-
-void gCanvas::setupGameMode() {
-	panelbutton.loadImage("futbolassets/btn_continue.png");
-	selectfont.loadFont("FreeSansBold.ttf", 20);
-	for(int i = 0; i < maxplayernum; i++) {
-		modebutton[i].w = panelbutton.getWidth() / 2;
-		modebutton[i].h = panelbutton.getHeight() / 2;
-		modebutton[i].x = boardx + ((boardw - modebutton[i].w) / 2);
-		modebutton[i].y = (boardy + ((boardh - modebutton[i].h) / 2)) + (modebutton[i].h * i);
-		modebutton[i].sw = panelbutton.getWidth();
-		modebutton[i].sh = panelbutton.getHeight();
-		modebutton[i].hold = false;
-	}
-	selecttext[PLAYER_LEFT] = "Player vs Player";
-	selecttext[PLAYER_RIGHT] = "Player vs NPC";
 }
 
 void gCanvas::drawMap() {
@@ -769,6 +348,7 @@ void gCanvas::drawBall() {
 //	ballimage.drawSub(ball.x - ball.radius, ball.y - ball.radius, ballframex, 0, ball.w, ball.h);
 	ballangle = calculateAngle(ball.velocityx, ball.velocityy);
 	ballimage.drawSub(ball.x - ball.radius, ball.y - ball.radius, ball.w, ball.h, ballframex, 0, ball.w, ball.h, ballangle);
+
 }
 void gCanvas::drawHit() {
 	hitw = ballhit.getWidth() / 6;
@@ -779,154 +359,26 @@ void gCanvas::drawHit() {
 	}
 }
 void gCanvas::drawPuds() {
-    pudleftframex = pudanimframeleft * pudleft.w;
-    pudleftimage.drawSub(pudleft.x, pudleft.y, pudleftframex, 0, pudleft.w, pudleft.h);
-    pudrightframex = pudanimframeright * pudright.w;
-    pudrightimage.drawSub(pudright.x, pudright.y, pudrightframex, 0, pudright.w, pudright.h);
+        pudleftframex = pudanimframeleft * pudleft.w;
+        pudleftimage.drawSub(pudleft.x, pudleft.y, pudleftframex, 0, pudleft.w, pudleft.h);
+        pudrightframex = pudanimframeright * pudright.w;
+        pudrightimage.drawSub(pudright.x, pudright.y, pudrightframex, 0, pudright.w, pudright.h);
 }
 void gCanvas::drawGoal() {
-	goal[PLAYER_LEFT].draw(goalx[PLAYER_LEFT], goaly[PLAYER_LEFT], goalw[PLAYER_LEFT], goalh[PLAYER_LEFT], 180);
+	goal[PLAYER_LEFT].draw(goalx[PLAYER_LEFT], goaly[PLAYER_LEFT], goalw[PLAYER_LEFT], goalh[PLAYER_LEFT]);
 	goal[PLAYER_RIGHT].draw(goalx[PLAYER_RIGHT], goaly[PLAYER_RIGHT], goalw[PLAYER_RIGHT], goalh[PLAYER_RIGHT]);
 }
 
-void gCanvas::drawScore() {
-	if(score[PLAYER_LEFT] < scorenumbersmaxframe) {
-		scorenumbers.drawSub(
-				goalx[PLAYER_LEFT] + goalx[PLAYER_LEFT] / 4,
-				goaly[PLAYER_LEFT] + (goalh[PLAYER_LEFT] / 2) - (scorenumbersframew / 2),
-				scores[score[PLAYER_LEFT]].x,
-				scores[score[PLAYER_LEFT]].y,
-				(int)scorenumbersframew, (int)scorenumbersframeh);
-	}
-
-	if(score[PLAYER_LEFT] < scorenumbersmaxframe) {
-		scorenumbers.drawSub(
-				goalx[PLAYER_RIGHT] + (goalw[PLAYER_RIGHT] / 3.5f),
-				goaly[PLAYER_LEFT] + (goalh[PLAYER_LEFT] / 2) - (scorenumbersframew / 2),
-				scores[score[PLAYER_RIGHT]].x,
-				scores[score[PLAYER_RIGHT]].y,
-				(int)scorenumbersframew, (int)scorenumbersframeh);
-	}
-}
-
-void gCanvas::drawGoalPostsLight() {
-	goalpostslights.drawSub(goalx[PLAYER_RIGHT] + (goalw[PLAYER_RIGHT] / 3), goaly[PLAYER_RIGHT] - ((goalpostslights.getWidth() / goalpostslightsframew) * 4), 60, 60, 0, 0, goalpostslightsframew, goalpostslightsframeh, 90);
-	goalpostslights.drawSub(goalx[PLAYER_RIGHT] + (goalw[PLAYER_RIGHT] / 3), goaly[PLAYER_RIGHT] + goalh[PLAYER_RIGHT] - ((goalpostslights.getWidth() / goalpostslightsframew) * 12), 60, 60, 0, 0, goalpostslightsframew, goalpostslightsframeh, 180);
-	goalpostslights.drawSub(goalx[PLAYER_LEFT] + (goalw[PLAYER_LEFT] / 12), goaly[PLAYER_LEFT] - ((goalpostslights.getWidth() / goalpostslightsframew) * 4), 60, 60, 0, 0, goalpostslightsframew, goalpostslightsframeh);
-	goalpostslights.drawSub(goalx[PLAYER_LEFT] + (goalw[PLAYER_LEFT] / 12), goaly[PLAYER_LEFT] + goalh[PLAYER_LEFT] - (goalh[PLAYER_LEFT] / 8), 60, 60, 0, 0, goalpostslightsframew, goalpostslightsframeh, -90);
-
-	renderer->setColor(238, 75, 43, 99);
-	for(int i = 0; i < activeGoalPostsLights.size(); i++) {
-		goalpostslights.drawSub(activeGoalPostsLights[i][GPL_X],
-				activeGoalPostsLights[i][GPL_Y],
-				activeGoalPostsLights[i][GPL_W],
-				activeGoalPostsLights[i][GPL_H],
-				activeGoalPostsLights[i][GPL_SX],
-				activeGoalPostsLights[i][GPL_SY], goalpostslightsframew, goalpostslightsframeh);
-	}
-	renderer->setColor(255, 255, 255);
-}
-
-void gCanvas::drawGoalEvent() {
-	goalimage.draw(goalimagex, goalimagey, goalimagew, goalimageh);
-}
-
-void gCanvas::drawWaitEvent() {
-	scorenumbers.drawSub(
-			(getWidth() - ((int)scorenumbersframew * WAIT_NUMBER_SIZE_MULTIPLIER)) / 2,
-			(getHeight() - ((int)scorenumbersframeh * WAIT_NUMBER_SIZE_MULTIPLIER)) / 2,
-			(int)scorenumbersframew * WAIT_NUMBER_SIZE_MULTIPLIER,
-			(int)scorenumbersframew * WAIT_NUMBER_SIZE_MULTIPLIER,
-			scores[waitnumber].x,
-			scores[waitnumber].y,
-			(int)scorenumbersframew, (int)scorenumbersframeh);
-}
-
-void gCanvas::drawPauseMenu() {
-	if(pausebutton.hold) renderer->setColor(161, 102, 47);
-	else renderer->setColor(181, 122, 67);
-	gDrawCircle(pausecx, pausecy, pauseradius, true);
-	renderer->setColor(255, 255, 255);
-
-	if(pausebutton.hold) renderer->setColor(0, 200, 0);
-	pausebuttonimg.draw(pausebutton.x, pausebutton.y, pausebutton.w, pausebutton.h);
-	renderer->setColor(255, 255, 255);
-
-	if(gamestate == GAME_PAUSE || gamestate == GAME_OPTIONS) {
-		board.draw(boardx, boardy, boardw, boardh);
-		boardheader.draw(boardheaderx, boardheadery, boardheaderw, boardheaderh);
-		boardfont.drawText(boardtext, boardheaderx + ((boardheaderw - boardfont.getStringWidth(boardtext)) / 2) , boardheadery + ((boardheaderh - boardfont.getStringHeight(boardtext)) / 1.15f));
-	}
-
-	if(gamestate == GAME_PAUSE) {
-		boardtext = "Paused";
-		for(int i = 0; i < BUTTON_COUNT; i++) {
-			menubutton[i].drawSub(buttoncoordinategroup[i].x, buttoncoordinategroup[i].y, buttoncoordinategroup[i].w, buttoncoordinategroup[i].w,
-						buttoncoordinategroup[i].sx, buttoncoordinategroup[i].sy * buttoncoordinategroup[i].hold, buttoncoordinategroup[i].sw, buttoncoordinategroup[i].sh);
-		}
-	}
-}
-
-void gCanvas::drawOptionsMenu() {
-	boardtext = "Options";
-
-	board.draw(boardx, boardy, boardw, boardh);
-	boardheader.draw(boardheaderx, boardheadery, boardheaderw, boardheaderh);
-	boardfont.drawText(boardtext, boardheaderx + ((boardheaderw - boardfont.getStringWidth(boardtext)) / 2) , boardheadery + ((boardheaderh - boardfont.getStringHeight(boardtext)) / 1.15f));
-
-	for(int i = 0; i < OPTIONS_COUNT; i++) {
-		optionsimg[i].draw(optionsbg[i].x, optionsbg[i].y, optionsbg[i].w, optionsbg[i].h);
-		sliderbackground.draw(sliderbg[i].x, sliderbg[i].y, sliderbg[i].w, sliderbg[i].h);
-		optionsicon[i].draw(opicon[i].x + (opicon[i].w / opicon[i].w), opicon[i].y + ((optionsbg[i].h - opicon[i].h) / 2), opicon[i].w, opicon[i].h);
-		sliderimg[sliderselected[i]].drawSub(slider[i].x, slider[i].y, slider[i].w, slider[i].w, 0, 0, slider[i].sw, slider[i].sh / 2);
-
-		renderer->setColor(0, 0, 0);
-		optionsfont.drawText(optionstext[i], (optionsbg[i].x + (opicon[i].w * 2)), sliderbg[i].y + (sliderbg[i].h / 1.8f));
-		renderer->setColor(255, 255, 255);
-	}
-
-	opbuttons[ACCEPT_BUTTON].drawSub(opbutton[ACCEPT_BUTTON].x, opbutton[ACCEPT_BUTTON].y, opbutton[ACCEPT_BUTTON].w, opbutton[ACCEPT_BUTTON].w, 0, opbutton[ACCEPT_BUTTON].sh * opbutton[ACCEPT_BUTTON].state, opbutton[ACCEPT_BUTTON].sw, opbutton[ACCEPT_BUTTON].sh);
-}
-
-void gCanvas::drawGameEndPanel() {
-	if(score[PLAYER_LEFT] >= 9) {
-		boardtext = "Player 1 Win";
-	}
-	else if(score[PLAYER_RIGHT] >= 9) {
-		boardtext = "Player 2 Win";
-	}
-	board.draw(endboardx, endboardy, endboardw, endboardh);
-	boardheader.draw(endboardheaderx, endboardheadery, endboardheaderw, endboardheaderh);
-	boardfont.drawText(boardtext, endboardheaderx + ((endboardheaderw - boardfont.getStringWidth(boardtext)) / 2) , endboardheadery + ((endboardheaderh - boardfont.getStringHeight(boardtext)) / 1.15f));
-
-	for(int i = 0; i < (BUTTON_COUNT - 1); i++) {
-		menubutton[i].drawSub(buttonendcoordinategroup[i].x + (buttonendcoordinategroup[i].w / 2), buttonendcoordinategroup[i].y + endboardheaderh, buttonendcoordinategroup[i].w, buttonendcoordinategroup[i].w,
-				buttonendcoordinategroup[i].sx, buttonendcoordinategroup[i].sy * buttonendcoordinategroup[i].hold, buttonendcoordinategroup[i].sw, buttonendcoordinategroup[i].sh);
-	}
-
-	if(gamestate == GAME_LOSE) youloseimage.draw(youloseimagex, youloseimagey - (boardh / 2.5f), youloseimagew, youloseimageh);
-	if(gamestate == GAME_WIN) youwinimage.draw(youwinimagex, youwinimagey - (boardh / 2.5f), youwinimagew, youwinimageh);
-}
-
-void gCanvas::drawGameMode() {
-	boardtext = "Select Mode";
-
-	board.draw(boardx, boardy, boardw, boardh);
-	boardheader.draw(boardheaderx, boardheadery, boardheaderw, boardheaderh);
-	boardfont.drawText(boardtext, boardheaderx + ((boardheaderw - boardfont.getStringWidth(boardtext)) / 2) , boardheadery + ((boardheaderh - boardfont.getStringHeight(boardtext)) / 1.15f));
-
-	for(int i = 0; i < maxplayernum; i++) {
-		panelbutton.drawSub(modebutton[i].x, modebutton[i].y, modebutton[i].w, modebutton[i].h / 2, 0, modebutton[i].h * modebutton[i].hold, modebutton[i].sw, modebutton[i].h);
-
-		renderer->setColor(0, 0, 0);
-		selectfont.drawText(selecttext[i], modebutton[i].x + ((modebutton[i].w - selectfont.getStringWidth(selecttext[i])) / 2), modebutton[i].y + ((modebutton[i].h - selectfont.getStringHeight(selecttext[i])) / 3));
-		renderer->setColor(255, 255, 255);
-	}
-}
 
 void gCanvas::updateBallPosition() {
-	checkGoal();
-	 if(ismoving){ // direkler
+	 checkGoal();
+	 if(ismoving){
+	        // Pudlar
+
+	        checkPudCollision(ball, pudleft);  // Sol pud
+	        checkPudCollision(ball, pudright); // Sag pud
+
+		 // direkler
 		 if(ball.y > ustdirek && ball.y < altdirek){
 			 for (int i = 0; i < 2; i++) {
 				if (checkPostCollision(ball, goalpostleft[i])) {
@@ -934,47 +386,32 @@ void gCanvas::updateBallPosition() {
 				}
 				if (checkPostCollision(ball, goalpostright[i])) {
 					reflectBall(ball, goalpostright[i]);
-				}
+			    }
 			}
-		 }
-		 else {// map sinirlari
-		 if((ball.x - ball.radius <= gamelinelimitx[0] || ball.x + ball.radius >= gamelinelimitx[1]) && (ball.y + ball.radius >= goalyend || ball.y - ball.radius <= goalystart)){
-			 startHitAnimation(ball.x, ball.y);
-			 ball.velocityx *= -1;
+		 } else {// map sinirlari
+			 if((ball.x - ball.radius <= gamelinelimitx[0] || ball.x + ball.radius >= gamelinelimitx[1]) && (ball.y + ball.radius >= goalyend || ball.y - ball.radius <= goalystart)){
+				 startHitAnimation(ball.x, ball.y);
+				 ball.velocityx *= -1;
 
-				if (ball.x - ball.radius <= gamelinelimitx[0])
-					ball.x = gamelinelimitx[0] + ball.radius;
-				else if (ball.x + ball.radius >= gamelinelimitx[1])
-					ball.x = gamelinelimitx[1] - ball.radius;
-		 }
-		 if (ball.y - ball.radius <= gamelinelimity[0] || ball.y + ball.radius >= gamelinelimity[1] ) {
-			 startHitAnimation(ball.x, ball.y);
-			 ball.velocityy *= -1;
+				    if (ball.x - ball.radius <= gamelinelimitx[0])
+				        ball.x = gamelinelimitx[0] + ball.radius;
+				    else if (ball.x + ball.radius >= gamelinelimitx[1])
+				        ball.x = gamelinelimitx[1] - ball.radius;
 
-			 if (ball.y - ball.radius <= gamelinelimity[0])
-					 ball.y = gamelinelimity[0] + ball.radius;
-				 else if (ball.y + ball.radius >= gamelinelimity[1])
-					 ball.y = gamelinelimity[1] - ball.radius;
-		 }
-			 if(abs(ball.velocityy) > 20)
+			 }
+			 if (ball.y - ball.radius <= gamelinelimity[0] || ball.y + ball.radius >= gamelinelimity[1] ) {
+				 startHitAnimation(ball.x, ball.y);
+				 ball.velocityy *= -1;
+
+				 if (ball.y - ball.radius <= gamelinelimity[0])
+				         ball.y = gamelinelimity[0] + ball.radius;
+				     else if (ball.y + ball.radius >= gamelinelimity[1])
+				         ball.y = gamelinelimity[1] - ball.radius;
+			 }
+			 if(abs(ball.velocityy) > 15)
 			 ball.velocityy *= 0.5;
 		 }
-		// pudlar
-		if (checkPudCollision(ball, pudleft)) {
-			if (!pudanimationactiveleft) {
-				startPudAnimation(LEFT);
-				startHitAnimation(ball.x, ball.y);
-			}
-			reflectBall(ball, pudleft);
-		}
 
-		if (checkPudCollision(ball, pudright)) {
-			if (!pudanimationactiveright) {
-				startPudAnimation(RIGHT);
-				startHitAnimation(ball.x, ball.y);
-			}
-			reflectBall(ball, pudright);
-		}
 
 		ball.x += ball.velocityx;
 		ball.y += ball.velocityy;
@@ -986,20 +423,69 @@ void gCanvas::updateBallPosition() {
 			ballframetimer = 0.0f; // timeri sifirla
 		}
 	}
+
 }
-void gCanvas::updateHitAnimating() {
-    if (ishitanimating) {
-    	hitframetimer += hitframespeed;
-    	if (hitframetimer >= 0.1f) {
-    		hitframe = (hitframe + 1) % 6;
-    		hitframetimer = 0.0f;
-    		if (hitframe == 0) {
-    			ishitanimating = false;
-    		}
-    	}
+bool gCanvas::isColliding(Ball& ball, Pud& pud) {
+    float nextX = ball.x + ball.velocityx;
+    float nextY = ball.y + ball.velocityy;
+
+    float pudLeft = pud.x + ball.radius;
+    float pudRight = pud.x + pud.w - ball.radius;
+    float pudTop = pud.y + ball.radius;
+    float pudBottom = pud.y + pud.h - ball.radius;
+
+    return (nextX - ball.radius < pudRight && nextX + ball.radius > pudLeft &&
+            nextY - ball.radius < pudBottom && nextY + ball.radius > pudTop);
+}
+void gCanvas::reflect(float& velocityX, float& velocityY, float normalX, float normalY) {
+    float dotProduct = velocityX * normalX + velocityY * normalY;
+    velocityX -= 2 * dotProduct * normalX;
+    velocityY -= 2 * dotProduct * normalY;
+}
+void gCanvas::checkPudCollision(Ball& ball, Pud& pud) {
+    if (isColliding(ball, pud)) {
+        float pudLeft = pud.x + ball.radius;
+        float pudRight = pud.x + pud.w - ball.radius;
+        float pudTop = pud.y + ball.radius;
+        float pudBottom = pud.y + pud.h - ball.radius;
+
+        if (ball.x + ball.radius <= pudLeft) {
+            reflect(ball.velocityx, ball.velocityy, -1, 0);
+            ball.x = pudLeft - ball.radius;
+        }
+        if (ball.x - ball.radius >= pudRight) {
+            reflect(ball.velocityx, ball.velocityy, 1, 0);
+            ball.x = pudRight + ball.radius;
+        }
+        if (ball.y + ball.radius <= pudTop) {
+            reflect(ball.velocityx, ball.velocityy, 0, -1);
+            ball.y = pudTop - ball.radius;
+        }
+        if (ball.y - ball.radius >= pudBottom) {
+            reflect(ball.velocityx, ball.velocityy, 0, 1);
+            ball.y = pudBottom + ball.radius;
+        }
+
+        ball.velocityy += pud.velocityy * 0.5f;
     }
-	}
+}
+
+
+
+void gCanvas::updateHitAnimating() {
+	    if (ishitanimating) {
+	           hitframetimer += hitframespeed;
+	           if (hitframetimer >= 0.1f) {
+	               hitframe = (hitframe + 1) % 6;
+	               hitframetimer = 0.0f;
+	               if (hitframe == 0) {
+	                   ishitanimating = false;
+	               }
+	           }
+	       }
+}
 void gCanvas::updatePudAnimating() {
+
     if (pudanimationactiveleft) {
         pudanimtimerleft += pudanimframespeed;
         if (pudanimtimerleft >= 0.1f) {
@@ -1023,179 +509,20 @@ void gCanvas::updatePudAnimating() {
     }
 }
 
-void gCanvas::updateBot() {
-	bool ballinrightside = ball.x > getWidth() / 2;
-	if (isuserleft) {
-		if (!isuserright) {
-			if(ballinrightside){
-				botcentery = pudright.y + pudright.h / 2;
-				ballcentery = ball.y;
-
-				targety = ballcentery - pudright.h / 2;
-				errormargin = 50.0f;
-
-				if (ballcentery < pudright.y + errormargin) {
-					pudright.y -= 5.0f;
-				} else if (ballcentery > pudright.y + pudright.h - errormargin) {
-					pudright.y += 5.0f;
-				}
-
-				pudright.y = std::max(pudright.y, 115.0f);
-				pudright.y = std::min(pudright.y, 600 - pudright.h);
-			}
-
-		}
-	}
-	else if (isuserright) {
-		if (!isuserleft) {
-			if(!ballinrightside){
-				botcentery = pudleft.y + pudleft.h / 2;
-				ballcentery = ball.y;
-
-				targety = ballcentery - pudleft.h / 2;
-				errormargin = 50.0f;
-				if (ballcentery < pudleft.y + errormargin) {
-				pudleft.y -= 5.0f;
-			} else if (ballcentery > pudleft.y + pudleft.h - errormargin) {
-				pudleft.y += 5.0f;
-			}
-				pudleft.y = std::max(pudleft.y, 115.0f);
-				pudleft.y = std::min(pudleft.y, 600 - pudleft.h);
-			}
-		}
-	}
-}
-
-void gCanvas::updatePudControl() {
-    if (ismovingupleft) {
-        pudleft.y -= movespeed;
-        pudleft.y = std::max(pudleft.y, 115.0f);
-    }
-    if (ismovingupright) {
-        pudright.y -= movespeed;
-        pudright.y = std::max(pudright.y, 115.0f);
-    }
-
-    if (ismovingdownleft) {
-        pudleft.y += movespeed;
-        pudleft.y = std::min(pudleft.y, 600 - pudleft.h);
-    }
-    if (ismovingdownright) {
-        pudright.y += movespeed;
-        pudright.y = std::min(pudright.y, 600 - pudright.h);
-    }
-}
-
-void gCanvas::updateGoalPostsLight() {
-	for(int i = 0; i < activeGoalPostsLights.size(); i++) {
-		if(activeGoalPostsLights[i][GPL_FRAMENO] < goalpostslightsmaxframe - 1) {
-			activeGoalPostsLights[i][GPL_COUNTER]++;
-			if(activeGoalPostsLights[i][GPL_COUNTER] % 3 == 0) {
-				activeGoalPostsLights[i][GPL_COUNTER] = 0;
-				activeGoalPostsLights[i][GPL_FRAMENO]++;
-			}
-			activeGoalPostsLights[i][GPL_SX] = (activeGoalPostsLights[i][GPL_FRAMENO] % goalpostslightsrowcol) * goalpostslightsframew;
-			activeGoalPostsLights[i][GPL_SY] = (activeGoalPostsLights[i][GPL_FRAMENO] / goalpostslightscolumncol) * goalpostslightsframeh;
-		} else activeGoalPostsLights.erase(activeGoalPostsLights.begin() + i);
-	}
-}
-
-void gCanvas::updateGoalEvent() {
-	goalscore = true;
-	waitcounter++;
-	if(waitcounter % 60 == 0) {
-		waitnumber--;
-		if(waitnumber <= 0) {
-			waitnumber = WAIT_SECOND;
-			gamestate = GAME_WAIT;
-		}
-	}
-}
-
-void gCanvas::updateSettingsDatabase(std::string datatype, int datavalue) {
-	std::string updatestatement = "UPDATE optionst SET "+ datatype + " = " + gToStr(datavalue);
-	root->database.execute(updatestatement);
-//	if(datatype == "difficultystate") root->difficultystate = datavalue;
-//	if(datatype == "musicstate") root->musicstate = datavalue;
-//	if(datatype == "vibrationstate") root->vibrationstate = datavalue;
-}
-
-void gCanvas::soundControl(bool musicvalue) {
-	if(musicvalue <= 0) {
-		root->music.stop();
-		root->buttonsound.stop();
-		root->clicksound.stop();
-		root->ballhitsound.stop();
-		root->whistlesound.stop();
-		root->goalsound.stop();
-	}
-	else {
-		root->music.play();
-	}
-}
-
-void gCanvas::updateSliderPosition(int whichslider, int value) {
-	if(whichslider == SLIDER_DIFFICULTY) {
-		int diffx = denormalizeSlider(sliderminx[SLIDER_DIFFICULTY], slidermaxx[SLIDER_DIFFICULTY], difficultyvalue);
-		slider[SLIDER_DIFFICULTY].x = diffx;
-
-	}
-	if(whichslider == SLIDER_MUSIC) {
-		int musicx = denormalizeSlider(sliderminx[SLIDER_MUSIC], slidermaxx[SLIDER_MUSIC], musicvalue);
-		slider[SLIDER_MUSIC].x = musicx;
-	}
-	if(whichslider == SLIDER_VIBRATION) {
-		if(vibrationvalue) slider[SLIDER_VIBRATION].x = slidermaxx[SLIDER_VIBRATION];
-		else slider[SLIDER_VIBRATION].x = sliderminx[SLIDER_VIBRATION];
-	}
-}
-
-int gCanvas::normalizeSlider(int minx, int maxx, int x) {
-	return std::round((static_cast<double>(x - minx) * 100) / (maxx - minx));
-}
-
-int gCanvas::denormalizeSlider(int minx, int maxx, int value) {
-    return std::round(((static_cast<double>(value) * (maxx - minx)) / 100) + minx);
-}
-
-void gCanvas::updateScore() {
-}
-
 float gCanvas::getBallSpeed() {
 	return sqrt(ball.velocityx * ball.velocityx + ball.velocityy * ball.velocityy);
 }
 void gCanvas::checkGoal() {
-	if (ball.x <= goalline[PLAYER_LEFT] - ball.radius) {
-		score[PLAYER_RIGHT]++;
-		goalEvent(PLAYER_LEFT);
-	}
-	if (ball.x >= goalline[PLAYER_RIGHT] + ball.radius) {
-		score[PLAYER_LEFT]++;
-		goalEvent(PLAYER_RIGHT);
-	}
+	 if (ball.x <= goalline[PLAYER_LEFT] - ball.radius) {
+	        score[PLAYER_RIGHT]++;
+	        resetBall();
+	    }
+	    if (ball.x >= goalline[PLAYER_RIGHT] + ball.radius) {
+	        score[PLAYER_LEFT]++;
+	        resetBall();
+	    }
 }
-
-void gCanvas::startBall() {
-    if (ismoving) {
-        savedvelocityx = ball.velocityx;
-        savedvelocityy = ball.velocityy;
-        savedballframe = ballcurrentframe;
-        savedballframetimer = ballframetimer;
-        ball.velocityx = 0;
-        ball.velocityy = 0;
-        ismoving = false;
-    }
-    else {
-        ball.velocityx = savedvelocityx;
-        ball.velocityy = savedvelocityy;
-        ballcurrentframe = savedballframe;
-        ballframetimer = savedballframetimer;
-        ismoving = true;
-    }
-}
-
 void gCanvas::resetBall() {
-	if(musicstate) root->whistlesound.play();
     ball.x = getWidth() / 2;
     ball.y = getHeight() / 2;
 	angle = gRandom(360) * (M_PI / 180);
@@ -1204,9 +531,7 @@ void gCanvas::resetBall() {
     ball.velocityx = 0;
     ball.velocityy = 0;
     ismoving = false; // Top durdu
-    startBall();
 }
-
 bool gCanvas::checkPostCollision(Ball& ball, Post& post) {
 	// top ve direk arasi mesafe
     dx = ball.x - post.x;
@@ -1232,7 +557,6 @@ void gCanvas::reflectBall(Ball& ball, Post& post) {
 }
 
 void gCanvas::startHitAnimation(float x, float y) {
-	if(musicstate) root->ballhitsound.play();
 	ishitanimating = true; //carpisma animasyonu oynatiliyor
 	hitframe = 0; //baslangici sifirla
 	hitframespeed = 0.03;
@@ -1240,135 +564,116 @@ void gCanvas::startHitAnimation(float x, float y) {
 	hitanimx = x;
 	hitanimy = y;
 }
-
 void gCanvas::startPudAnimation(int type) {
 	if (type == LEFT) {
-		pudanimationactiveleft = true;
-		pudanimationactiveright = false;
-		pudanimframeleft = 0;
-		pudanimtimerleft = 0.0f;
-	}
-	else if (type == RIGHT) {
-		pudanimationactiveright = true;
-		pudanimationactiveleft = false;
-		pudanimframeright = 0;
-		pudanimtimerright = 0.0f;
-	}
+	        pudanimationactiveleft = true;
+	        pudanimationactiveright = false;
+	        pudanimframeleft = 0;
+	        pudanimtimerleft = 0.0f;
+	    } else if (type == RIGHT) {
+	        pudanimationactiveright = true;
+	        pudanimationactiveleft = false;
+	        pudanimframeright = 0;
+	        pudanimtimerright = 0.0f;
+	    }
+
 }
 
-bool gCanvas::checkPudCollision(Ball &ball, Pud &pud) {
-	return (ball.x + ball.radius >= pud.x && ball.x - ball.radius <= pud.x + pud.w &&
-	                ball.y + ball.radius >= pud.y && ball.y - ball.radius <= pud.y + pud.h);
-}
 
-void gCanvas::reflectBall(Ball &ball, Pud &pud) {
-	closestSide(ball, pud);
-
-	if (mindistance == disttop || mindistance == distbot) {
-		ball.velocityy *= -1;
-		ball.velocityy += pud.velocityy;
-		ball.y = (mindistance == disttop) ? pud.y - ball.radius : pud.y + pud.h + ball.radius;
-	}
-
-	if (mindistance == distleft || mindistance == distright) {
-		ball.velocityx *= -1;
-		ball.velocityy += pud.velocityy;
-		if(abs(ball.velocityy) > maxspeed)
-		ball.velocityy *= maxspeed / ball.velocityy;
-		ball.x = (mindistance == distleft) ? pud.x - ball.radius : pud.x + pud.w + ball.radius;
-	}
-
-	if(abs(ball.velocityx) < speed)
-		ball.velocityx *= speed / ball.velocityx;
-}
-
-void gCanvas::closestSide(Ball &ball, Pud &pud) {
-    disttop = abs(ball.y + ball.radius - pud.y);
-    distbot = abs((ball.y - ball.radius) - pud.y - pud.h);
-    distleft = abs(ball.x + ball.radius - pud.x);
-    distright = abs(ball.x  - ball.radius - (pud.x + pud.w));
-
-    mindistance = std::min({disttop, distbot, distleft, distright});
-}
 
 float gCanvas::calculateAngle(int velocityx, int velocityy) {
 	 if (velocityx == 0 && velocityy == 0) {
-		return 0;
-	}
+	        return 0;
+	    }
 
-	angleradians = atan2(velocityy, velocityx);
-	angledegrees = angleradians * (180.0f / M_PI);
+	    angleradians = atan2(velocityy, velocityx);
+	    angledegrees = angleradians * (180.0f / M_PI);
 
-	return fmod(angledegrees + 360.0f, 360.0f);
+	    return fmod(angledegrees + 360.0f, 360.0f);
 }
 
-void gCanvas::generateGoalPostsLight(int goalpostslightx, int goalpostslighty,
-		int goalpostslightw, int goalpostslighth) {
-	newgoalpostslight.push_back(goalpostslightx);
-	newgoalpostslight.push_back(goalpostslighty);
-	newgoalpostslight.push_back(goalpostslightw);
-	newgoalpostslight.push_back(goalpostslighth);
-	newgoalpostslight.push_back(0);  // Subx
-	newgoalpostslight.push_back(0);  // Suby
-	newgoalpostslight.push_back(0); // Frame No
-	newgoalpostslight.push_back(0); // Counter
+void gCanvas::updateBot() {
 
-	activeGoalPostsLights.push_back(newgoalpostslight);
-	newgoalpostslight.clear();
+    if (!isPvE) return;
+
+    if (difficulty == 1) {
+        botSpeed = 3.0f;
+        errormargin = 80.0f;
+    } else if (difficulty == 2) {
+        botSpeed = 5.0f;
+        errormargin = 50.0f;
+    } else if (difficulty == 3) { // Zor
+        botSpeed = 8.0f;
+        errormargin = 20.0f;
+    }
+
+    bool ballinrightside = ball.x > getWidth() / 2;
+
+    if (isuserleft) {
+        if (!isuserright) {
+            if(ballinrightside) {
+                botcentery = pudright.y + pudright.h / 2;
+                ballcentery = ball.y;
+                targety = ballcentery - pudright.h / 2;
+
+                if (ballcentery < pudright.y + errormargin) {
+                    pudright.y -= botSpeed;
+                } else if (ballcentery > pudright.y + pudright.h - errormargin) {
+                    pudright.y += botSpeed;
+                }
+
+                pudright.y = std::max(pudright.y, 115.0f);
+                pudright.y = std::min(pudright.y, 600 - pudright.h);
+
+                checkPudCollision(ball, pudright);
+            }
+        }
+    } else if (isuserright) {
+        if (!isuserleft) {
+            if(!ballinrightside) {
+                botcentery = pudleft.y + pudleft.h / 2;
+                ballcentery = ball.y;
+                targety = ballcentery - pudleft.h / 2;
+
+                if (ballcentery < pudleft.y + errormargin) {
+                    pudleft.y -= botSpeed;
+                } else if (ballcentery > pudleft.y + pudleft.h - errormargin) {
+                    pudleft.y += botSpeed;
+                }
+
+                pudleft.y = std::max(pudleft.y, 115.0f);
+                pudleft.y = std::min(pudleft.y, 600 - pudleft.h);
+                checkPudCollision(ball, pudleft);
+            }
+        }
+    }
 }
 
-void gCanvas::waitEvent() {
-//	if(musicstate) root->goalsound.stop();
-	waitcounter++;
-	if(waitcounter % 60 == 0) {
-		if(musicstate) root->clicksound.play();
-		waitnumber--;
-		if(waitnumber < 0) {
-			gamestate = GAME_START;
-			if(goalscore) {
-				resetBall();
-				goalscore = false;
-			}
-			waitnumber = WAIT_SECOND;
-		}
-	}
+
+
+
+
+void gCanvas::updatePudControl() {
+    if (ismovingupleft) {
+        pudleft.y -= movespeed;
+        pudleft.y = std::max(pudleft.y, 115.0f);
+        checkPudCollision(ball, pudleft);
+    }
+    if (ismovingupright) {
+        pudright.y -= movespeed;
+        pudright.y = std::max(pudright.y, 115.0f);
+        checkPudCollision(ball, pudright);
+    }
+
+    if (ismovingdownleft) {
+        pudleft.y += movespeed;
+        pudleft.y = std::min(pudleft.y, 600 - pudleft.h);
+        checkPudCollision(ball, pudleft);
+    }
+    if (ismovingdownright) {
+        pudright.y += movespeed;
+        pudright.y = std::min(pudright.y, 600 - pudright.h);
+        checkPudCollision(ball, pudright);
+    }
 }
 
-void gCanvas::goalEvent(int whoscored) {
-//	if(musicstate) root->goalsound.play(); // Add goal song here.
-	if(whoscored == PLAYER_LEFT) {
-		generateGoalPostsLight(goalx[PLAYER_RIGHT] + (goalw[PLAYER_RIGHT] / 3), goaly[PLAYER_RIGHT] - ((goalpostslights.getWidth() / goalpostslightsframew) * 4), 60, 60);
-		generateGoalPostsLight(goalx[PLAYER_RIGHT] + (goalw[PLAYER_RIGHT] / 3), goaly[PLAYER_RIGHT] + goalh[PLAYER_RIGHT] - ((goalpostslights.getWidth() / goalpostslightsframew) * 12), 60, 60);
-	}
-
-	if(whoscored == PLAYER_RIGHT) {
-		generateGoalPostsLight(goalx[PLAYER_LEFT] + (goalw[PLAYER_LEFT] / 12), goaly[PLAYER_LEFT] - ((goalpostslights.getWidth() / goalpostslightsframew) * 4), 60, 60);
-		generateGoalPostsLight(goalx[PLAYER_LEFT] + (goalw[PLAYER_LEFT] / 12), goaly[PLAYER_LEFT] + goalh[PLAYER_LEFT] - (goalh[PLAYER_LEFT] / 8), 60, 60);
-	}
-	if(score[PLAYER_LEFT] >= 9) {
-		gamestate = GAME_WIN;
-		boardtext = "Player 1 Win";
-	}
-	else if(score[PLAYER_RIGHT] >= 9) {
-		gamestate = GAME_LOSE;
-		boardtext = "Player 2 Win";
-	}
-	else gamestate = GAME_GOAL;
-}
-
-void gCanvas::selectPlayerPosition(int playerpos) {
-	if(playerpos == PLAYER_LEFT) {
-    	isuserleft = true;
-        isuserright = false;
-	}
-	if(playerpos == PLAYER_RIGHT) {
-    	isuserleft = false;
-        isuserright = true;
-	}
-	gamestate = GAME_START;
-	resetBall();
-}
-
-void gCanvas::sliderControl() {
-	soundControl(musicstate);
-}
