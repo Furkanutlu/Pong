@@ -20,8 +20,7 @@ void menuCanvas::setup() {
 	setupLogo();
 	setupGoal();
 	setupOptionsMenu();
-	root->music.play();
-	root->music.setPaused(!musicstate);
+	soundControl(musicvalue, SOUND_TYPE_STARTING);
 }
 
 void menuCanvas::update() {
@@ -52,13 +51,14 @@ void menuCanvas::mousePressed(int x, int y, int button) {
 	for(int i = 0; i < OPTIONS_COUNT; i++) {
 		if(gamestate == BUTTON_OPTIONS && x > slider[i].x && x < slider[i].x + slider[i].w && y > slider[i].y && y < slider[i].y + slider[i].h){
 			sliderselected[i] = true;
-			if(musicstate) root->clicksound.play();
+			soundControl(musicvalue, SOUND_TYPE_ONHIT, SOUND_CLICK);
 		}
 	}
 
 	// Option button
 	if(x > opbutton[ACCEPT_BUTTON].x && x < (opbutton[ACCEPT_BUTTON].x + opbutton[ACCEPT_BUTTON].w) && y > opbutton[ACCEPT_BUTTON].y && y < (opbutton[ACCEPT_BUTTON].y + opbutton[ACCEPT_BUTTON].h)) {
 		opbutton[ACCEPT_BUTTON].state = true;
+		soundControl(musicvalue, SOUND_TYPE_ONHIT, SOUND_CLICK);
 	}
 }
 
@@ -68,21 +68,21 @@ void menuCanvas::mouseReleased(int x, int y, int button) {
 		gCanvas* main = new gCanvas(root);
 		appmanager->setCurrentCanvas(main);
 
-		if(musicstate) root->buttonsound.play();
+		soundControl(musicvalue, SOUND_TYPE_ONHIT, SOUND_BUTTON);
 	}
 	if(buttoncoordinategroup[BUTTON_OPTIONS].state == true) {
 		buttoncoordinategroup[BUTTON_OPTIONS].state = false;
 		gamestate = BUTTON_OPTIONS;
-		if(musicstate) root->clicksound.play();
+		soundControl(musicvalue, SOUND_TYPE_ONHIT, SOUND_CLICK);
 	}
 	if(buttoncoordinategroup[BUTTON_RATE].state == true) {
-		if(musicstate) root->clicksound.play();
+		soundControl(musicvalue, SOUND_TYPE_ONHIT, SOUND_CLICK);
 	}
 	if(buttoncoordinategroup[BUTTON_SHARE].state == true) {
-		if(musicstate) root->clicksound.play();
+		soundControl(musicvalue, SOUND_TYPE_ONHIT, SOUND_CLICK);
 	}
 	if(buttoncoordinategroup[BUTTON_MORE_GAMES].state == true) {
-		if(musicstate) root->clicksound.play();
+		soundControl(musicvalue, SOUND_TYPE_ONHIT, SOUND_CLICK);
 	}
 
 	// Slider release control
@@ -98,22 +98,24 @@ void menuCanvas::mouseReleased(int x, int y, int button) {
 			if(i == SLIDER_MUSIC) {
 				// If you release the slider it will send its data to the database.
 				musicvalue = normalizeSlider(sliderminx[i], slidermaxx[i], slider[i].x);
+
+				soundControl(musicvalue, SOUND_TYPE_SLIDER);
 				updateSettingsDatabase("musicstate", musicvalue);
 			}
 			if(i == SLIDER_VIBRATION) {
 				// If you release the slider it will check it and send its data to the database.
 				if(slider[i].x <= sliderminx[i]) {
 					slider[i].x = slidermaxx[i];
+					vibrationvalue = 1;
 				}
 				else {
 					slider[i].x = sliderminx[i];
+					vibrationvalue = 0;
 				}
 
-				vibrationvalue = sliderselected[i];
+				gLogi("Vibration Value ") << std::to_string(vibrationvalue);
 				updateSettingsDatabase("vibrationstate", vibrationvalue);
 			}
-
-			sliderControl();
 		}
 	}
 
@@ -123,10 +125,6 @@ void menuCanvas::mouseReleased(int x, int y, int button) {
 		opbutton[ACCEPT_BUTTON].state = false;
 		gamestate = GAME_NORMAL;
 	}
-}
-
-void menuCanvas::sliderControl() {
-	soundControl(musicstate);
 }
 
 void menuCanvas::mouseDragged(int x, int y, int button) {
@@ -162,11 +160,11 @@ void menuCanvas::setupButtons() {
 	button[BUTTON_MORE_GAMES].loadImage("futbolassets/btn_menu_h_more_games.png");
 
 	buttoncoordinategroup[BUTTON_PLAY].w = button[BUTTON_PLAY].getWidth() / 1.5f;
-	buttoncoordinategroup[BUTTON_PLAY].h = button[BUTTON_PLAY].getHeight() / 2;
+	buttoncoordinategroup[BUTTON_PLAY].h = (button[BUTTON_PLAY].getHeight() / 3.0f);
 	buttoncoordinategroup[BUTTON_PLAY].sw = button[BUTTON_PLAY].getWidth();
 	buttoncoordinategroup[BUTTON_PLAY].sh = button[BUTTON_PLAY].getHeight() / BUTTON_FRAMES;
 	buttoncoordinategroup[BUTTON_PLAY].x = (getWidth() - buttoncoordinategroup[BUTTON_PLAY].w) / 2;
-	buttoncoordinategroup[BUTTON_PLAY].y = (getHeight() - buttoncoordinategroup[BUTTON_PLAY].h) / 1.75f;
+	buttoncoordinategroup[BUTTON_PLAY].y = (getHeight() - buttoncoordinategroup[BUTTON_PLAY].h) / 2.0f;
 	buttoncoordinategroup[BUTTON_PLAY].state = false;
 
 	for(int i = 1; i < BUTTON_COUNT; i++) {
@@ -175,7 +173,7 @@ void menuCanvas::setupButtons() {
 		buttoncoordinategroup[i].sw = button[i].getWidth();
 		buttoncoordinategroup[i].sh = button[i].getHeight() / BUTTON_FRAMES;
 		buttoncoordinategroup[i].x = buttoncoordinategroup[BUTTON_PLAY].x + (buttoncoordinategroup[BUTTON_PLAY].sw * 1.20f) - ((buttoncoordinategroup[i].sw / 1.25f) * (i - 1));
-		buttoncoordinategroup[i].y = buttoncoordinategroup[BUTTON_PLAY].y + (buttoncoordinategroup[BUTTON_PLAY].sh / 1.25f);
+		buttoncoordinategroup[i].y = buttoncoordinategroup[BUTTON_PLAY].y + (buttoncoordinategroup[BUTTON_PLAY].sh / 1.5f);
 		buttoncoordinategroup[i].state = false;
 	}
 }
@@ -212,6 +210,10 @@ void menuCanvas::setupOptionsMenu() {
 	musicvalue = root->musicvalue;
 	difficultyvalue = root->difficultyvalue;
 	vibrationvalue = root->vibrationvalue;
+
+	gLogi("musicvalue") << std::to_string(musicvalue);
+	gLogi("difficultyvalue") << std::to_string(difficultyvalue);
+	gLogi("vibrationvalue") << std::to_string(vibrationvalue);
 
 	// Panel
 	board.loadImage("futbolassets/board.png");
@@ -283,8 +285,6 @@ void menuCanvas::setupOptionsMenu() {
 	}
 
 	// Slider
-	sliderselected[SLIDER_DIFFICULTY] = difficultystate;
-	sliderselected[SLIDER_MUSIC] = musicstate;
 	sliderselected[SLIDER_VIBRATION] = vibrationstate;
 
 	updateSliderPosition(SLIDER_DIFFICULTY, difficultyvalue);
@@ -302,7 +302,7 @@ void menuCanvas::drawBackground() {
 
 void menuCanvas::drawButtons() {
 	for(int i = 0; i < BUTTON_COUNT; i++) {
-		button[i].drawSub(buttoncoordinategroup[i].x, buttoncoordinategroup[i].y, buttoncoordinategroup[i].w, buttoncoordinategroup[i].w, 0, buttoncoordinategroup[i].sh * buttoncoordinategroup[i].state, buttoncoordinategroup[i].sw, buttoncoordinategroup[i].sh);
+		button[i].drawSub(buttoncoordinategroup[i].x, buttoncoordinategroup[i].y, buttoncoordinategroup[i].w, buttoncoordinategroup[i].h, 0, buttoncoordinategroup[i].sh * buttoncoordinategroup[i].state, buttoncoordinategroup[i].sw, buttoncoordinategroup[i].sh);
 	}
 }
 
@@ -348,7 +348,7 @@ void menuCanvas::updateSliderPosition(int whichslider, int value) {
 		slider[SLIDER_MUSIC].x = musicx;
 	}
 	if(whichslider == SLIDER_VIBRATION) {
-		if(vibrationvalue) slider[SLIDER_VIBRATION].x = slidermaxx[SLIDER_VIBRATION];
+		if(vibrationvalue == 1) slider[SLIDER_VIBRATION].x = slidermaxx[SLIDER_VIBRATION];
 		else slider[SLIDER_VIBRATION].x = sliderminx[SLIDER_VIBRATION];
 	}
 }
@@ -369,16 +369,28 @@ int menuCanvas::denormalizeSlider(int minx, int maxx, int value) {
     return std::round(((static_cast<double>(value) * (maxx - minx)) / 100) + minx);
 }
 
-void menuCanvas::soundControl(bool musicvalue) {
-	if(musicvalue <= 0) {
-		root->music.stop();
-		root->buttonsound.stop();
-		root->clicksound.stop();
-		root->ballhitsound.stop();
-		root->whistlesound.stop();
-		root->goalsound.stop();
-	}
-	else {
+void menuCanvas::soundControl(int musicvalue, int type, int sound) {
+	float volume = (float)musicvalue / 100;
+	musicstate = musicvalue <= 0 ? true : false;
+
+	if(type == SOUND_TYPE_STARTING) {
+		root->music.setVolume(volume);
 		root->music.play();
+		root->music.setPaused(musicstate);
+	}
+	if(type == SOUND_TYPE_SLIDER) {
+		root->music.setVolume(volume);
+		if(!(root->music.isPlaying())) root->music.play();
+		root->music.setPaused(musicstate);
+	}
+	if(type == SOUND_TYPE_ONHIT && !musicstate) {
+		if(sound == SOUND_BUTTON) {
+			root->buttonsound.setVolume(volume);
+			root->buttonsound.play();
+		}
+		if(sound == SOUND_CLICK) {
+			root->clicksound.setVolume(volume);
+			root->clicksound.play();
+		}
 	}
 }

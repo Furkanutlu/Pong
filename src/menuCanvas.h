@@ -42,6 +42,9 @@ private:
 	static const int OPTIONS_BUTTON_COUNT = 2;
 	static const int ACCEPT_BUTTON = 0, DECLINE_BUTTON = 1;
 
+	static const int SOUND_TYPE_STARTING = 0, SOUND_TYPE_SLIDER = 1, SOUND_TYPE_ONHIT = 2;
+	static const int SOUND_BUTTON = 0, SOUND_CLICK = 1;
+
 	int gamestate;
 
 	void setupBackground();
@@ -56,13 +59,38 @@ private:
 	void drawGoal();
     void drawOptionsMenu();
 
+
+    /**
+     * Assigns the datatype string and datavalue integer to the updateStatement string in the format
+     * "UPDATE options SET " + datatype + " = " + gToStr(datavalue). Then, based on the datatype, it executes
+     * the statement on the database variable located in the root, updating one of the difficultyValue, musicValue,
+     * or vibrationValue variables.
+     */
     void updateSettingsDatabase(std::string datatype, int datavalue);
+
+    /**
+     * Controls the whichSlider and value integers using the SLIDER_DIFFICULTY, SLIDER_MUSIC, and SLIDER_VIBRATION constants.
+     * Based on the desired denormalizeSlider values, it assigns an X-coordinate between minX or maxX, or assigns
+     * accordingly if it's a true/false condition.
+     */
     void updateSliderPosition(int whichslider, int value);
+
+    /**
+     * Returns a value between 0 and 100 based on the given minX, maxX, and X value.
+     */
 	int normalizeSlider(int minx, int maxx, int x);
+
+	/**
+	 * Returns an X-coordinate between minX and maxX based on the given value.
+	 */
 	int denormalizeSlider(int minx, int maxx, int value);
 
-	void sliderControl();
-    void soundControl(bool musicstate);
+	/**
+	 * Converts the value received from musicValue to a float between 0 and 1 by dividing it by 100.
+	 * Then, based on the desired sound type and volume, it handles operations such as playing, stopping,
+	 * and adjusting the volume of the sound track.
+	 */
+    void soundControl(int musicvalue, int type = 0, int sound = 0);
 
 	gImage background;
 	int backgroundw, backgroundh;

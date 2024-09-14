@@ -32,7 +32,7 @@ void gApp::setup() {
 	// Load musics
 
 	music.loadSound("stadium_crowd.mp3");
-	music.setLoopType(gBaseSound::LOOPTYPE_DEFAULT);
+	music.setLoopType(gBaseSound::LOOPTYPE_NORMAL);
 	buttonsound.loadSound("buton_ses.mp3");
 	clicksound.loadSound("click.wav");
 	ballhitsound.loadSound("hitting_ball.wav");
