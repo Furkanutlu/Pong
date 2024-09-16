@@ -50,6 +50,8 @@ private:
 	static const int PLAYER_LEFT = 0, PLAYER_RIGHT = 1;
 	static const int UST_DIREK = 0, ALT_DIREK = 1;
 	static const int LEFT = 0, RIGHT = 1, BOTTOM = 2, TOP = 3;
+	const float minspeedbot = 3.0f, maxspeedbot = 10.0f, minerrormarginbot = 20.0f, maxerrormarginbot = 80.0f;
+
 
 	static const int OPTIONS_COUNT = 3;
 	static const int OPTIONS_BUTTON_COUNT = 2;
@@ -304,9 +306,14 @@ private:
 	bool ismovingdownright, ismovingdownleft;
 
     int difficulty;
-    float botSpeed;
-
-
+    float botspeed;
+    bool ballinrightside;
+    float pudratio;
+    int scorecounter;
+    int diffx, musicx;
+    int randomdirectionx;
+    float pudleftside, pudrightside, pudtopside, pudbottomside;
+    float nextx, nexty;
 	// Goal Lights
 	bool lightactive;
 	gImage goalpostslights;

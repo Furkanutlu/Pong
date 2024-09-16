@@ -66,16 +66,11 @@ void gCanvas::draw() {
 	if(gamestate == GAME_LOSE || gamestate == GAME_WIN) drawGameEndPanel();
 	//gDrawRectangle(pudleft.x, pudleft.y + 10, pudleft.w, pudleft.h - 20, false);
 	//gDrawRectangle(gamelinelimitx[0], gamelinelimity[0], gamelinelimitx[1], gamelinelimity[1], true);
+	//gDrawRectangle(pudleft.x + 5, pudright.y + 6, pudright.w, pudright.h, false);
 }
 
 void gCanvas::keyPressed(int key) {
 	//gLogi("gCanvas") << "keyPressed:" << key;
-	if (key == 82) {
-		resetBall();
-	}
-    if (key == 32) {
-    	toggleBallMovement();
-    }
 
 	// Oyun oynama
 	if (gamestate == GAME_START) {
@@ -139,38 +134,6 @@ void gCanvas::mouseDragged(int x, int y, int button) {
 			if(slider[i].x >= sliderminx[i] && slider[i].x <= slidermaxx[i]) slider[i].x = x - slider[0].w / 2;
 			if(slider[i].x < sliderminx[i]) slider[i].x = sliderminx[i];
 			if(slider[i].x > slidermaxx[i]) slider[i].x = slidermaxx[i];
-		}
-	}
-
-	// Pud Control
-	if(gamestate == GAME_START) {
-		if (button == MOUSEBUTTON_LEFT) {
-			currentmousey = y;
-			if (x < getWidth() / 2) {
-				pudleft.y = currentmousey - pudleft.h / 2;
-
-				pudleft.y = std::max(pudleft.y, 115.0f);
-				pudleft.y = std::min(pudleft.y, 600 - pudleft.h);
-
-				if (currentmousey != prevmouseyleft) {
-					pudleft.velocityy = currentmousey - prevmouseyleft;
-				} else {
-					pudleft.velocityy = 0;
-				}
-
-				prevmouseyleft = currentmousey;
-			} else {
-				pudright.y = currentmousey - pudright.h / 2;
-
-				pudright.y = std::max(pudright.y, 115.0f);
-				pudright.y = std::min(pudright.y, 600 - pudright.h);
-				if (currentmousey != prevmouseyright) {
-					pudright.velocityy = currentmousey - prevmouseyright;
-				} else {
-					pudright.velocityy = 0;
-				}
-				prevmouseyright = currentmousey;
-			}
 		}
 	}
 }
@@ -312,8 +275,6 @@ void gCanvas::mouseReleased(int x, int y, int button) {
 					slider[i].x = sliderminx[i];
 					vibrationvalue = 0;
 				}
-
-				gLogi("Vibration Value ") << std::to_string(vibrationvalue);
 				updateSettingsDatabase("vibrationstate", vibrationvalue);
 			}
 		}
@@ -368,11 +329,6 @@ void gCanvas::mouseReleased(int x, int y, int button) {
 		}
 	}
 
-	// Make velocity 0
-    if (button == MOUSEBUTTON_LEFT) {
-        pudleft.velocityy = 0;
-        pudright.velocityy = 0;
-    }
 }
 
 void gCanvas::mouseScrolled(int x, int y) {
@@ -459,7 +415,7 @@ void gCanvas::setupBall() {
 	ball.x = getWidth() / 2;
 	ball.y = getHeight() / 2;
 	ball.radius = ball.h / 2;
-	speed = 8.0f;
+	speed = 10.0f;
 	maxspeed = 15.0f;
 
 	resetBall();
@@ -483,7 +439,7 @@ void gCanvas::setupPuds() {
 	score[PLAYER_RIGHT] = 0;
 	pudleftimage.loadImage("futbolassets/pud_left.png");
 	pudrightimage.loadImage("futbolassets/pud_right.png");
-	float pudratio = 0.7f;
+	pudratio = 0.7f;
 	pudleft.w = (pudleftimage.getWidth() / 5) * pudratio;
 	pudleft.h = (pudleftimage.getHeight()) * pudratio;
 	pudleft.x = 150;
@@ -508,7 +464,7 @@ void gCanvas::setupScore() {
 	scorenumbersframew = scorenumbers.getWidth() / scorenumbersrowcol;
 	scorenumbersframeh = scorenumbers.getHeight() / scorenumberscolumncol;
 
-	int scorecounter = 0;
+	scorecounter = 0;
 	for(int i = 0; i < scorenumberscolumncol; i++) {
 		scorenumbersframey = i * 64;
 		for(int j = 0; j < scorenumbersrowcol; j++) {
@@ -874,12 +830,7 @@ void gCanvas::drawOptionsMenu() {
 }
 
 void gCanvas::drawGameEndPanel() {
-	if(score[PLAYER_LEFT] >= 9) {
-		boardtext = "Player 1 Win";
-	}
-	else if(score[PLAYER_RIGHT] >= 9) {
-		boardtext = "Player 2 Win";
-	}
+
 	board.draw(endboardx, endboardy, endboardw, endboardh);
 	boardheader.draw(endboardheaderx, endboardheadery, endboardheaderw, endboardheaderh);
 	boardfont.drawText(boardtext, endboardheaderx + ((endboardheaderw - boardfont.getStringWidth(boardtext)) / 2) , endboardheadery + ((endboardheaderh - boardfont.getStringHeight(boardtext)) / 1.15f));
@@ -889,8 +840,19 @@ void gCanvas::drawGameEndPanel() {
 				buttonendcoordinategroup[i].sx, buttonendcoordinategroup[i].sy * buttonendcoordinategroup[i].hold, buttonendcoordinategroup[i].sw, buttonendcoordinategroup[i].sh);
 	}
 
-	if(gamestate == GAME_LOSE) youloseimage.draw(youloseimagex, youloseimagey - (boardh / 2.5f), youloseimagew, youloseimageh);
-	if(gamestate == GAME_WIN) youwinimage.draw(youwinimagex, youwinimagey - (boardh / 2.5f), youwinimagew, youwinimageh);
+	if(gamemode == MODE_PVP) {
+	        if(gamestate == GAME_WIN || gamestate == GAME_LOSE) youwinimage.draw(youwinimagex, youwinimagey - (boardh / 2.5f), youwinimagew, youwinimageh);
+	    }
+	    if(gamemode == MODE_PVE) {
+	        if(isuserleft == true) {
+	            if(gamestate == GAME_WIN) youwinimage.draw(youwinimagex, youwinimagey - (boardh / 2.5f), youwinimagew, youwinimageh);
+	            if(gamestate == GAME_LOSE) youloseimage.draw(youwinimagex, youwinimagey - (boardh / 2.5f), youwinimagew, youwinimageh);
+	        }
+	        if(isuserright == true) {
+	            if(gamestate == GAME_WIN) youwinimage.draw(youwinimagex, youwinimagey - (boardh / 2.5f), youwinimagew, youwinimageh);
+	            if(gamestate == GAME_LOSE) youloseimage.draw(youwinimagex, youwinimagey - (boardh / 2.5f), youwinimagew, youwinimageh);
+	        }
+	    }
 }
 
 void gCanvas::drawGameMode() {
@@ -949,8 +911,8 @@ void gCanvas::updateBallPosition() {
 				     else if (ball.y + ball.radius >= gamelinelimity[1])
 				         ball.y = gamelinelimity[1] - ball.radius;
 			 }
-			 if(abs(ball.velocityy) > 20)
-			 ball.velocityy *= 0.5;
+			 if(abs(ball.velocityy) > 15)
+			 ball.velocityy *= 0.4;
 		 }
 
 
@@ -1006,54 +968,39 @@ void gCanvas::updatePudAnimating() {
 void gCanvas::updateBot() {
 	if (gamemode != MODE_PVE) return;
 
-	if (difficulty == 1) {
-		botSpeed = 3.0f;
-		errormargin = 80.0f;
-	} else if (difficulty == 2) {
-		botSpeed = 5.0f;
-		errormargin = 50.0f;
-	} else if (difficulty == 3) { // Zor
-		botSpeed = 8.0f;
-		errormargin = 20.0f;
-	}
 
-	bool ballinrightside = ball.x > getWidth() / 2;
+	botspeed = minspeedbot + ((difficultyvalue / 100.0f) * (maxspeedbot - minspeedbot));
+	errormargin = maxerrormarginbot - ((difficultyvalue / 100.0f) * (maxerrormarginbot - minerrormarginbot));
 
-	if (isuserleft) {
-		if (!isuserright) {
-			if(ballinrightside) {
+	ballinrightside = ball.x > getWidth() / 2;
+
+	if (isuserleft && !isuserright && ballinrightside) {
 				botcentery = pudright.y + pudright.h / 2;
 				ballcentery = ball.y;
 				targety = ballcentery - pudright.h / 2;
 
 				if (ballcentery < pudright.y + errormargin) {
-					pudright.y -= botSpeed;
+					pudright.y -= botspeed;
 				} else if (ballcentery > pudright.y + pudright.h - errormargin) {
-					pudright.y += botSpeed;
+					pudright.y += botspeed;
 				}
 
 				pudright.y = std::max(pudright.y, 115.0f);
 				pudright.y = std::min(pudright.y, 600 - pudright.h);
 			}
-		}
-	} else if (isuserright) {
-		if (!isuserleft) {
-			if(!ballinrightside) {
+	if (isuserright && !isuserleft && !ballinrightside) {
 				botcentery = pudleft.y + pudleft.h / 2;
 				ballcentery = ball.y;
 				targety = ballcentery - pudleft.h / 2;
-
 				if (ballcentery < pudleft.y + errormargin) {
-					pudleft.y -= botSpeed;
+					pudleft.y -= botspeed;
 				} else if (ballcentery > pudleft.y + pudleft.h - errormargin) {
-					pudleft.y += botSpeed;
+					pudleft.y += botspeed;
 				}
 
 				pudleft.y = std::max(pudleft.y, 115.0f);
 				pudleft.y = std::min(pudleft.y, 600 - pudleft.h);
 			}
-		}
-	}
 }
 
 void gCanvas::updatePudControl() {
@@ -1077,7 +1024,6 @@ void gCanvas::updatePudControl() {
     pudright.y += pudright.velocityy;
 
     pudleft.y = std::max(115.0f, std::min(pudleft.y, 600.0f - pudleft.h));
-
     pudright.y = std::max(115.0f, std::min(pudright.y, 600.0f - pudright.h));
 
     checkPudCollision(ball, pudleft);
@@ -1119,12 +1065,12 @@ void gCanvas::updateSettingsDatabase(std::string datatype, int datavalue) {
 
 void gCanvas::updateSliderPosition(int whichslider, int value) {
 	if(whichslider == SLIDER_DIFFICULTY) {
-		int diffx = denormalizeSlider(sliderminx[SLIDER_DIFFICULTY], slidermaxx[SLIDER_DIFFICULTY], difficultyvalue);
+		diffx = denormalizeSlider(sliderminx[SLIDER_DIFFICULTY], slidermaxx[SLIDER_DIFFICULTY], difficultyvalue);
 		slider[SLIDER_DIFFICULTY].x = diffx;
 
 	}
 	if(whichslider == SLIDER_MUSIC) {
-		int musicx = denormalizeSlider(sliderminx[SLIDER_MUSIC], slidermaxx[SLIDER_MUSIC], musicvalue);
+		musicx = denormalizeSlider(sliderminx[SLIDER_MUSIC], slidermaxx[SLIDER_MUSIC], musicvalue);
 		slider[SLIDER_MUSIC].x = musicx;
 	}
 	if(whichslider == SLIDER_VIBRATION) {
@@ -1178,7 +1124,7 @@ void gCanvas::resetBall() {
     ball.y = getHeight() / 2;
 
     angle = gRandom(360) * (M_PI / 180);
-    int randomdirectionx = (rand() % 2 == 0) ? -1 : 1;
+    randomdirectionx = (rand() % 2 == 0) ? -1 : 1;
     savedvelocityx = randomdirectionx * speed;
     savedvelocityy = sin(angle) * speed;
     ball.velocityx = 0;
@@ -1253,28 +1199,29 @@ void gCanvas::startPudAnimation(int type) {
 
 void gCanvas::checkPudCollision(Ball& ball, Pud& pud) {
     if (isColliding(ball, pud)) {
-        float pudLeft = pud.x;
-        float pudRight = pud.x + pud.w;
-        float pudTop = pud.y;
-        float pudBottom = pud.y + pud.h;
+        pudleftside = pud.x + 6;
+        pudrightside = pud.x + pud.w;
+        pudtopside = pud.y + 7;
+        pudbottomside = pud.y + pud.h;
 
-        if (ball.x + ball.radius <= pudLeft) {
+        if (ball.x + ball.radius <= pudleftside) {
             reflect(ball.velocityx, ball.velocityy, -1, 0);
-            ball.x = pudLeft - ball.radius;
+            ball.x = pudleftside - ball.radius;
         }
-        if (ball.x - ball.radius >= pudRight) {
+        if (ball.x - ball.radius >= pudrightside) {
             reflect(ball.velocityx, ball.velocityy, 1, 0);
-            ball.x = pudRight + ball.radius;
+            ball.x = pudrightside + ball.radius;
         }
-        if (ball.y + ball.radius <= pudTop) {
+        if (ball.y + ball.radius <= pudtopside) {
             reflect(ball.velocityx, ball.velocityy, 0, -1);
-            ball.y = pudTop - ball.radius;
+            ball.y = pudtopside - ball.radius;
         }
-        if (ball.y - ball.radius >= pudBottom) {
+        if (ball.y - ball.radius >= pudbottomside) {
             reflect(ball.velocityx, ball.velocityy, 0, 1);
-            ball.y = pudBottom + ball.radius;
+            ball.y = pudbottomside + ball.radius;
         }
         ball.velocityy += pud.velocityy;
+        startHitAnimation(ball.x, ball.y);
     }
 }
 
@@ -1366,12 +1313,36 @@ void gCanvas::goalEvent(int whoscored) {
 		generateGoalPostsLight(goalx[PLAYER_LEFT] + (goalw[PLAYER_LEFT] / 12), goaly[PLAYER_LEFT] + goalh[PLAYER_LEFT] - (goalh[PLAYER_LEFT] / 8), 60, 60);
 	}
 	if(score[PLAYER_LEFT] >= 9) {
-		changeGameState(GAME_WIN);
-		boardtext = "Player 1 Win";
+		if(gamemode == MODE_PVP) {
+			changeGameState(GAME_WIN);
+			boardtext = "Player 1 Win";
+		}
+		if(gamemode == MODE_PVE) {
+			if(isuserleft) {
+				changeGameState(GAME_WIN);
+				boardtext = "Player 1 Win";
+			}
+			else {
+				changeGameState(GAME_LOSE);
+				boardtext = "Bot 1 Win";
+			}
+		}
 	}
 	else if(score[PLAYER_RIGHT] >= 9) {
-		changeGameState(GAME_LOSE);
-		boardtext = "Player 2 Win";
+		if(gamemode == MODE_PVP) {
+			changeGameState(GAME_WIN);
+			boardtext = "Player 2 Win";
+		}
+		if(gamemode == MODE_PVE) {
+			if(isuserright) {
+				changeGameState(GAME_WIN);
+				boardtext = "Player 2 Win";
+			}
+			else {
+				changeGameState(GAME_LOSE);
+				boardtext = "Bot 2 Win";
+			}
+		}
 	}
 	else changeGameState(GAME_GOAL);
 }
@@ -1385,7 +1356,7 @@ void gCanvas::selectPlayerPosition(int playerpos) {
     	isuserleft = false;
         isuserright = true;
 	}
-	if(playerpos == MODE_PVP) {
+	if(gamemode == MODE_PVP) {
 		isuserleft = true;
 		isuserright = true;
 	}
@@ -1455,8 +1426,8 @@ void gCanvas::setupGame() {
     ismovingdownleft = false;
     ismovingupright = false;
     ismovingdownright = false;
-	isuserleft = true;
-	isuserright = true;
+	isuserleft = false;
+	isuserright = false;
 }
 
 void gCanvas::changeGameState(int gamestate) {
@@ -1490,16 +1461,16 @@ void gCanvas::toggleBallMovement() {
 }
 
 bool gCanvas::isColliding(Ball &ball, Pud &pud) {
-    float nextX = ball.x + ball.velocityx;
-    float nextY = ball.y + ball.velocityy;
+    nextx = ball.x + ball.velocityx;
+    nexty = ball.y + ball.velocityy;
 
-    float pudLeft = pud.x;
-    float pudRight = pud.x + pud.w;
-    float pudTop = pud.y;
-    float pudBottom = pud.y + pud.h;
+    pudleftside = pud.x + 6;
+    pudrightside = pud.x + pud.w;
+    pudtopside = pud.y + 7;
+    pudbottomside = pud.y + pud.h;
 
-    return (nextX - ball.radius < pudRight && nextX + ball.radius > pudLeft &&
-            nextY - ball.radius < pudBottom && nextY + ball.radius > pudTop);
+    return (nextx - ball.radius < pudrightside && nextx + ball.radius > pudleftside &&
+            nexty - ball.radius < pudbottomside && nexty + ball.radius > pudtopside);
 }
 
 void gCanvas::changeDifficulty(int difficultyvalue) {

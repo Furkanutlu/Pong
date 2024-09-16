@@ -21,7 +21,7 @@ void menuCanvas::setup() {
 	setupGoal();
 	setupOptionsMenu();
 	setupGoalPostsLight();
-//	soundControl(musicvalue, SOUND_TYPE_STARTING);
+	soundControl(musicvalue, SOUND_TYPE_STARTING);
 }
 
 void menuCanvas::update() {
@@ -114,8 +114,6 @@ void menuCanvas::mouseReleased(int x, int y, int button) {
 					slider[i].x = sliderminx[i];
 					vibrationvalue = 0;
 				}
-
-				gLogi("Vibration Value ") << std::to_string(vibrationvalue);
 				updateSettingsDatabase("vibrationstate", vibrationvalue);
 			}
 		}
@@ -231,10 +229,6 @@ void menuCanvas::setupOptionsMenu() {
 	musicvalue = root->musicvalue;
 	difficultyvalue = root->difficultyvalue;
 	vibrationvalue = root->vibrationvalue;
-
-	gLogi("musicvalue") << std::to_string(musicvalue);
-	gLogi("difficultyvalue") << std::to_string(difficultyvalue);
-	gLogi("vibrationvalue") << std::to_string(vibrationvalue);
 
 	// Panel
 	board.loadImage("futbolassets/board.png");
@@ -413,7 +407,7 @@ void menuCanvas::soundControl(int musicvalue, int type, int sound) {
 	musicstate = musicvalue <= 0 ? true : false;
 
 	if(type == SOUND_TYPE_STARTING) {
-		root->music.setVolume(volume);
+		root->music.setVolume(volume / 2);
 		root->music.play();
 		root->music.setPaused(musicstate);
 	}
