@@ -38,6 +38,9 @@ void gApp::setup() {
 	ballhitsound.loadSound("hitting_ball.wav");
 	whistlesound.loadSound("whistle.wav");
 	goalsound.loadSound("goal.mp3");
+	goalsound1.loadSound("goal1.wav");
+	goalsound2.loadSound("goal2.wav");
+	goalsound3.loadSound("goal3.wav");
 
 	// Database
 

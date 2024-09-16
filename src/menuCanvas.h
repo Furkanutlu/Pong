@@ -42,8 +42,10 @@ private:
 	static const int OPTIONS_BUTTON_COUNT = 2;
 	static const int ACCEPT_BUTTON = 0, DECLINE_BUTTON = 1;
 
-	static const int SOUND_TYPE_STARTING = 0, SOUND_TYPE_SLIDER = 1, SOUND_TYPE_ONHIT = 2;
+	static const int SOUND_TYPE_STARTING = 0, SOUND_TYPE_SLIDER = 1, SOUND_TYPE_ONHIT = 2, SOUND_TYPE_CLOSE = 3;
 	static const int SOUND_BUTTON = 0, SOUND_CLICK = 1;
+
+	static const int maxmapimages = 5; // toplam map sayisi
 
 	int gamestate;
 
@@ -52,12 +54,14 @@ private:
 	void setupLogo();
 	void setupGoal();
     void setupOptionsMenu();
+    void setupGoalPostsLight();
 
 	void drawBackground();
 	void drawButtons();
 	void drawLogo();
 	void drawGoal();
     void drawOptionsMenu();
+    void drawGoalPostsLight();
 
 
     /**
@@ -92,8 +96,10 @@ private:
 	 */
     void soundControl(int musicvalue, int type = 0, int sound = 0);
 
-	gImage background;
-	int backgroundw, backgroundh;
+    // Map
+	int randommapnum;
+	gImage background[maxmapimages];
+	int backgroundx, backgroundy, backgroundw, backgroundh;
 
 	gImage button[BUTTON_COUNT];
 
@@ -117,7 +123,20 @@ private:
 	// Goal
 
 	gImage goal[maxgoalnum];
-	int goalx[maxgoalnum], goaly, goalw, goalh;
+	int goalx[maxgoalnum], goaly[maxgoalnum], goalw[maxgoalnum], goalh[maxgoalnum];
+
+	// Center Line
+	gImage mapcenterline;
+	int mapcenterlinex, mapcenterliney, mapcenterlinew, mapcenterlineh;
+
+	// Light
+
+	bool lightactive;
+	gImage goalpostslights;
+	int goalpostslightsframew, goalpostslightsframeh, goalpostslightsmaxframe, goalpostslightsrowcol, goalpostslightscolumncol;
+
+	std::vector<int> newgoalpostslight;
+	std::vector<std::vector<int>> activeGoalPostsLights;
 
 	// Options
 
@@ -157,7 +176,6 @@ private:
 	// VFX
 	bool musicstate, difficultystate, vibrationstate;
 	int musicvalue, difficultyvalue, vibrationvalue;
-	bool premusicstate, predifficultystate, previbrationstate;
 };
 
 #endif /* SRC_MENU_H_ */

@@ -65,8 +65,9 @@ private:
 	const int GAME_START = 0, GAME_PAUSE = 1, GAME_GOAL = 2, GAME_WIN = 3, GAME_LOSE = 4, GAME_OPTIONS = 5, GAME_WAIT = 6, GAME_SELECT_MODE = 7;
 	const int MODE_NONE = -1, MODE_PVP = 0, MODE_PVE = 1;
 
-	static const int SOUND_TYPE_STARTING = 0, SOUND_TYPE_SLIDER = 1, SOUND_TYPE_ONHIT = 2;
+	static const int SOUND_TYPE_STARTING = 0, SOUND_TYPE_SLIDER = 1, SOUND_TYPE_ONHIT = 2, SOUND_TYPE_CLOSE = 3;
 	static const int SOUND_BUTTON = 0, SOUND_CLICK = 1, SOUND_BALL_HIT = 2, SOUND_WHISTLE = 3, SOUND_GOAL = 4;
+	static const int GOAL_SOUND_COUNT = 3;
 
 	int gamestate, pregamestate;
 	int gamemode;
@@ -131,6 +132,7 @@ private:
 	void updatePudAnimating();
 	void updateBot();
 	void updatePudControl();
+	void resetGame();
 
 	/**
 	 * Executes each GoalPostsLights object in the activeGoalPostsLights vector, runs their animation, and then erases them.
@@ -183,7 +185,6 @@ private:
 	 */
 	void startBall();
 	void resetBall();
-	void resetGame();
 	void startHitAnimation(float x, float y);
 	void startPudAnimation(int type);
 
@@ -231,11 +232,10 @@ private:
      */
     void changeGameState(int gamestate);
 
-    //
 	void reflect(float& velocityX, float& velocityY, float normalX, float normalY);
 	void toggleBallMovement();
 	bool isColliding(Ball& ball, Pud& pud);
-    //
+	void changeDifficulty(int difficultyvalue);
 
 	int mapx, mapy, mapw, maph;
 	int goalx[maxgoalnum], goaly[maxgoalnum], goalw[maxgoalnum], goalh[maxgoalnum];
@@ -409,7 +409,6 @@ private:
 	// Option states
 	bool musicstate, difficultystate, vibrationstate;
 	int musicvalue, difficultyvalue, vibrationvalue;
-	bool premusicstate, predifficultystate, previbrationstate;
 
 	// Game End Panel
 

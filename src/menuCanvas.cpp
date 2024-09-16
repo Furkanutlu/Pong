@@ -20,7 +20,8 @@ void menuCanvas::setup() {
 	setupLogo();
 	setupGoal();
 	setupOptionsMenu();
-	soundControl(musicvalue, SOUND_TYPE_STARTING);
+	setupGoalPostsLight();
+//	soundControl(musicvalue, SOUND_TYPE_STARTING);
 }
 
 void menuCanvas::update() {
@@ -31,6 +32,7 @@ void menuCanvas::draw() {
 	drawButtons();
 	drawLogo();
 	drawGoal();
+    drawGoalPostsLight();
 	if(gamestate == BUTTON_OPTIONS) drawOptionsMenu();
 }
 
@@ -130,7 +132,7 @@ void menuCanvas::mouseReleased(int x, int y, int button) {
 void menuCanvas::mouseDragged(int x, int y, int button) {
 	for(int i = 0; i < OPTIONS_COUNT; i++) {
 		if(i != SLIDER_VIBRATION && sliderselected[i]) {
-			if(slider[i].x >= sliderminx[i] && slider[i].x <= slidermaxx[i]) slider[i].x = x;
+			if(slider[i].x >= sliderminx[i] && slider[i].x <= slidermaxx[i]) slider[i].x = x - slider[0].w / 2;
 			if(slider[i].x < sliderminx[i]) slider[i].x = sliderminx[i];
 			if(slider[i].x > slidermaxx[i]) slider[i].x = slidermaxx[i];
 		}
@@ -147,9 +149,25 @@ void menuCanvas::mouseExited() {
 }
 
 void menuCanvas::setupBackground() {
-	background.loadImage("futbolassets/court_01.png");
+
+	//mapleri yukleme
+	for(int i = 0; i < maxmapimages; i++){
+		background[i].loadImage("futbolassets/court_0" + gToStr(i + 1) + ".png");
+	}
+	backgroundx = 0;
+	backgroundy = 0;
 	backgroundw = getWidth();
 	backgroundh = getHeight();
+
+	//random map secimi
+	randommapnum = gRandom(maxmapimages);
+
+	//Orta cizgi yukleme
+	mapcenterline.loadImage("futbolassets/court_center_line.png");
+	mapcenterlinew = mapcenterline.getWidth();
+	mapcenterlineh = mapcenterline.getHeight() - 91;
+	mapcenterlinex = (getWidth() - mapcenterlinew) / 2 ;
+	mapcenterliney = (getHeight() - mapcenterlineh) / 2 - 3;
 }
 
 void menuCanvas::setupButtons() {
@@ -196,13 +214,16 @@ void menuCanvas::setupGoal() {
 	//Kale konumlari
 	goal[PLAYER_LEFT].loadImage("futbolassets/goal_posts_left.png");
 	goal[PLAYER_RIGHT].loadImage("futbolassets/goal_posts_right.png");
-	goalw = goal[PLAYER_LEFT].getWidth() / 1.45f;
-	goaly = 150;
 
-	goalh = goal[PLAYER_LEFT].getHeight() / 1.45f;
+	goalw[PLAYER_LEFT] = goal[PLAYER_LEFT].getWidth() / 1.1f;
+	goalh[PLAYER_LEFT] = goal[PLAYER_LEFT].getHeight() / 1.5f;
+	goalx[PLAYER_LEFT] = 30;
+	goaly[PLAYER_LEFT] = 152;
 
-	goalx[PLAYER_LEFT] = 50;
-	goalx[PLAYER_RIGHT] = 1140;
+	goalw[PLAYER_RIGHT] = goal[PLAYER_RIGHT].getWidth() / 1.1f;
+	goalh[PLAYER_RIGHT] = goal[PLAYER_RIGHT].getHeight() / 1.5f;
+	goaly[PLAYER_RIGHT] = 152;
+	goalx[PLAYER_RIGHT] = 1125;
 }
 
 void menuCanvas::setupOptionsMenu() {
@@ -296,8 +317,19 @@ void menuCanvas::setupOptionsMenu() {
 	opbutton[ACCEPT_BUTTON].state = false;
 }
 
+void menuCanvas::setupGoalPostsLight() {
+	goalpostslights.loadImage("futbolassets/goal_posts_lights.png");
+	goalpostslightsrowcol = 5;
+	goalpostslightscolumncol = 4;
+
+	goalpostslightsframew = goalpostslights.getWidth() / 5;
+	goalpostslightsframeh = goalpostslights.getHeight() / 4;
+	goalpostslightsmaxframe = 20;
+}
+
 void menuCanvas::drawBackground() {
-	background.draw(0, 0, backgroundw, backgroundh);
+	background[randommapnum].draw(backgroundx, backgroundy, backgroundw, backgroundh);
+	mapcenterline.draw(mapcenterlinex, mapcenterliney, mapcenterlinew, mapcenterlineh);
 }
 
 void menuCanvas::drawButtons() {
@@ -312,8 +344,8 @@ void menuCanvas::drawLogo() {
 }
 
 void menuCanvas::drawGoal() {
-	goal[PLAYER_LEFT].draw(goalx[PLAYER_LEFT], goaly, goalw, goalh, 180);
-	goal[PLAYER_LEFT].draw(goalx[PLAYER_RIGHT], goaly, goalw, goalh);
+	goal[PLAYER_LEFT].draw(goalx[PLAYER_LEFT], goaly[PLAYER_LEFT], goalw[PLAYER_LEFT], goalh[PLAYER_LEFT], 180);
+	goal[PLAYER_RIGHT].draw(goalx[PLAYER_RIGHT], goaly[PLAYER_RIGHT], goalw[PLAYER_RIGHT], goalh[PLAYER_RIGHT]);
 }
 
 void menuCanvas::drawOptionsMenu() {
@@ -335,6 +367,13 @@ void menuCanvas::drawOptionsMenu() {
 	}
 
 	opbuttons[ACCEPT_BUTTON].drawSub(opbutton[ACCEPT_BUTTON].x, opbutton[ACCEPT_BUTTON].y, opbutton[ACCEPT_BUTTON].w, opbutton[ACCEPT_BUTTON].w, 0, opbutton[ACCEPT_BUTTON].sh * opbutton[ACCEPT_BUTTON].state, opbutton[ACCEPT_BUTTON].sw, opbutton[ACCEPT_BUTTON].sh);
+}
+
+void menuCanvas::drawGoalPostsLight() {
+	goalpostslights.drawSub(goalx[PLAYER_RIGHT] + (goalw[PLAYER_RIGHT] / 3), goaly[PLAYER_RIGHT] - ((goalpostslights.getWidth() / goalpostslightsframew) * 4), 60, 60, 0, 0, goalpostslightsframew, goalpostslightsframeh, 90);
+	goalpostslights.drawSub(goalx[PLAYER_RIGHT] + (goalw[PLAYER_RIGHT] / 3), goaly[PLAYER_RIGHT] + goalh[PLAYER_RIGHT] - ((goalpostslights.getWidth() / goalpostslightsframew) * 12), 60, 60, 0, 0, goalpostslightsframew, goalpostslightsframeh, 180);
+	goalpostslights.drawSub(goalx[PLAYER_LEFT] + (goalw[PLAYER_LEFT] / 12), goaly[PLAYER_LEFT] - ((goalpostslights.getWidth() / goalpostslightsframew) * 4), 60, 60, 0, 0, goalpostslightsframew, goalpostslightsframeh);
+	goalpostslights.drawSub(goalx[PLAYER_LEFT] + (goalw[PLAYER_LEFT] / 12), goaly[PLAYER_LEFT] + goalh[PLAYER_LEFT] - (goalh[PLAYER_LEFT] / 8), 60, 60, 0, 0, goalpostslightsframew, goalpostslightsframeh, -90);
 }
 
 void menuCanvas::updateSliderPosition(int whichslider, int value) {

@@ -31,7 +31,6 @@ void gCanvas::setup() {
 	setupOptionsMenu();
 	setupGameEndPanel();
 	setupGameMode();
-	soundControl(musicvalue, SOUND_TYPE_STARTING);
 }
 void gCanvas::update() {
 	if(gamestate == GAME_START) {
@@ -53,9 +52,9 @@ void gCanvas::update() {
 void gCanvas::draw() {
 	//logo.draw((getWidth() - logo.getWidth()) / 2, (getHeight() - logo.getHeight()) / 2);
 	drawMap();
-	drawGoal();
 	drawPuds();
 	drawBall();
+	drawGoal();
 	drawHit();
 	drawScore();
 	drawGoalPostsLight();
@@ -100,23 +99,23 @@ void gCanvas::keyPressed(int key) {
 }
 void gCanvas::keyReleased(int key) {
 //	gLogi("gCanvas") << "keyReleased:" << key;
-    if (gamestate == GAME_START) {
-        if (gamemode == MODE_PVP) {
-            if (key == 265) ismovingupright = false; // Up arrow
-            if (key == 264) ismovingdownright = false; // Down arrow
-            if (key == 87) ismovingupleft = false; // 'W'
-            if (key == 83) ismovingdownleft = false; // 'S'
-        }
-        else if (gamemode == MODE_PVE) {
-            if (isuserleft) {
-                if (key == 87) ismovingupleft = false; // 'W'
-                if (key == 83) ismovingdownleft = false; // 'S'
-            } else if (isuserright) {
-                if (key == 265) ismovingupright = false; // Up arrow
-                if (key == 264) ismovingdownright = false; // Down arrow
-            }
-        }
-    }
+	if (gamestate == GAME_START) {
+		if (gamemode == MODE_PVP) {
+			if (key == 265) ismovingupright = false; // Up arrow
+			if (key == 264) ismovingdownright = false; // Down arrow
+			if (key == 87) ismovingupleft = false; // 'W'
+			if (key == 83) ismovingdownleft = false; // 'S'
+		}
+		else if (gamemode == MODE_PVE) {
+			if (isuserleft) {
+				if (key == 87) ismovingupleft = false; // 'W'
+				if (key == 83) ismovingdownleft = false; // 'S'
+			} else if (isuserright) {
+				if (key == 265) ismovingupright = false; // Up arrow
+				if (key == 264) ismovingdownright = false; // Down arrow
+			}
+		}
+	}
 }
 
 void gCanvas::charPressed(unsigned int codepoint) {
@@ -137,12 +136,43 @@ void gCanvas::mouseDragged(int x, int y, int button) {
 	// Options sliders
 	for(int i = 0; i < OPTIONS_COUNT; i++) {
 		if(i != SLIDER_VIBRATION && sliderselected[i]) {
-			if(slider[i].x >= sliderminx[i] && slider[i].x <= slidermaxx[i]) slider[i].x = x;
+			if(slider[i].x >= sliderminx[i] && slider[i].x <= slidermaxx[i]) slider[i].x = x - slider[0].w / 2;
 			if(slider[i].x < sliderminx[i]) slider[i].x = sliderminx[i];
 			if(slider[i].x > slidermaxx[i]) slider[i].x = slidermaxx[i];
 		}
 	}
 
+	// Pud Control
+	if(gamestate == GAME_START) {
+		if (button == MOUSEBUTTON_LEFT) {
+			currentmousey = y;
+			if (x < getWidth() / 2) {
+				pudleft.y = currentmousey - pudleft.h / 2;
+
+				pudleft.y = std::max(pudleft.y, 115.0f);
+				pudleft.y = std::min(pudleft.y, 600 - pudleft.h);
+
+				if (currentmousey != prevmouseyleft) {
+					pudleft.velocityy = currentmousey - prevmouseyleft;
+				} else {
+					pudleft.velocityy = 0;
+				}
+
+				prevmouseyleft = currentmousey;
+			} else {
+				pudright.y = currentmousey - pudright.h / 2;
+
+				pudright.y = std::max(pudright.y, 115.0f);
+				pudright.y = std::min(pudright.y, 600 - pudright.h);
+				if (currentmousey != prevmouseyright) {
+					pudright.velocityy = currentmousey - prevmouseyright;
+				} else {
+					pudright.velocityy = 0;
+				}
+				prevmouseyright = currentmousey;
+			}
+		}
+	}
 }
 
 void gCanvas::mousePressed(int x, int y, int button) {
@@ -201,21 +231,6 @@ void gCanvas::mousePressed(int x, int y, int button) {
 void gCanvas::mouseReleased(int x, int y, int button) {
 //	gLogi("gCanvas") << "mouseReleased" << ", button:" << button;
 
-//----- The codes below is for control purposes.
-
-//	gLogi("gCanvas") << "mouseReleased" << ", button:" << button;
-
-//	if(button == 0) goalEvent(PLAYER_RIGHT);
-//	else goalEvent(PLAYER_LEFT);
-
-//	if(button == 0) gamestate = GAME_GOAL;
-//	if(button == 1) gamestate = GAME_LOSE;
-//	else gamestate = GAME_WIN;
-
-//	gLogi("FrameX ") << std::to_string(score[PLAYER_LEFT] % scorenumberscolumncol) << " FrameY " << std::to_string(score[PLAYER_LEFT] / scorenumberscolumncol);
-
-//----- The codes above is for control purposes.
-
 	// Pause Button
 	if(gamestate != GAME_SELECT_MODE && gamestate != GAME_GOAL && gamestate != GAME_LOSE && gamestate != GAME_WIN && gamestate != GAME_WAIT) {
 		if(pausebutton.hold) {
@@ -233,10 +248,15 @@ void gCanvas::mouseReleased(int x, int y, int button) {
 			if(buttoncoordinategroup[i].hold) {
 				if(i == BUTTON_REPLAY) {
 					buttoncoordinategroup[i].state = true;
+
+					soundControl(musicvalue, SOUND_TYPE_CLOSE);
+
 					gCanvas* replay = new gCanvas(root);
 					appmanager->setCurrentCanvas(replay);
 				}
 				if(i == BUTTON_HOME) {
+					soundControl(musicvalue, SOUND_TYPE_CLOSE);
+
 					menuCanvas* main = new menuCanvas(root);
 					appmanager->setCurrentCanvas(main);
 				}
@@ -272,6 +292,7 @@ void gCanvas::mouseReleased(int x, int y, int button) {
 			if(i == SLIDER_DIFFICULTY) {
 				// If you release the slider it will send its data to the database.
 				difficultyvalue = normalizeSlider(sliderminx[i], slidermaxx[i], slider[i].x);
+				changeDifficulty(difficultyvalue);
 				updateSettingsDatabase("difficultystate", difficultyvalue);
 			}
 			if(i == SLIDER_MUSIC) {
@@ -291,6 +312,8 @@ void gCanvas::mouseReleased(int x, int y, int button) {
 					slider[i].x = sliderminx[i];
 					vibrationvalue = 0;
 				}
+
+				gLogi("Vibration Value ") << std::to_string(vibrationvalue);
 				updateSettingsDatabase("vibrationstate", vibrationvalue);
 			}
 		}
@@ -421,6 +444,7 @@ void gCanvas::setupGoal() {
 	ustdirek = 200;
 	altdirek = 515;
 }
+
 void gCanvas::setupBall() {
 	//frame ve hiz
 
@@ -440,6 +464,7 @@ void gCanvas::setupBall() {
 
 	resetBall();
 }
+
 void gCanvas::setupMaphitbox() {
 	gamelinelimitx[0] = 150;
 	gamelinelimitx[1] = 1125;
@@ -452,6 +477,7 @@ void gCanvas::setupMaphitbox() {
 	goalystart = 195;
 	goalyend = 520;
 }
+
 void gCanvas::setupPuds() {
 	score[PLAYER_LEFT] = 0;
 	score[PLAYER_RIGHT] = 0;
@@ -471,7 +497,6 @@ void gCanvas::setupPuds() {
 	pudright.y = (getHeight() - pudright.h) / 2;
 	pudright.velocityy = 0;
 	pudanimationactiveright = false;
-
 }
 
 void gCanvas::setupScore() {
@@ -569,6 +594,13 @@ void gCanvas::setupPauseMenu() {
 }
 
 void gCanvas::setupOptionsMenu() {
+	// Get database values from root
+	musicvalue = root->musicvalue;
+	difficultyvalue = root->difficultyvalue;
+	vibrationvalue = root->vibrationvalue;
+
+	changeDifficulty(difficultyvalue);
+
 	// Panel
 	board.loadImage("futbolassets/board.png");
 	boardw = board.getWidth() / 1.4f;
@@ -625,7 +657,6 @@ void gCanvas::setupOptionsMenu() {
 		slider[i].x = sliderminx[i];
 		slider[i].y = sliderbg[i].y + ((sliderbg[i].h - (slider[i].h / 2)) / 2);
 	}
-
 	// Text
 	optionstext[0] = "Difficulty";
 	optionstext[1] = "Music";
@@ -640,14 +671,6 @@ void gCanvas::setupOptionsMenu() {
 	}
 
 	// Slider
-
-	// Get database values from root
-	musicvalue = root->musicvalue;
-	difficultyvalue = root->difficultyvalue;
-	vibrationvalue = root->vibrationvalue;
-
-	sliderselected[SLIDER_DIFFICULTY] = difficultystate;
-	sliderselected[SLIDER_MUSIC] = musicstate;
 	sliderselected[SLIDER_VIBRATION] = vibrationstate;
 
 	updateSliderPosition(SLIDER_DIFFICULTY, difficultyvalue);
@@ -717,6 +740,13 @@ void gCanvas::drawMap() {
 	mapcenterline.draw(mapcenterlinex, mapcenterliney, mapcenterlinew, mapcenterlineh);
 }
 
+void gCanvas::drawPuds() {
+    pudleftframex = pudanimframeleft * pudleft.w;
+    pudleftimage.drawSub(pudleft.x, pudleft.y, pudleftframex, 0, pudleft.w, pudleft.h);
+    pudrightframex = pudanimframeright * pudright.w;
+    pudrightimage.drawSub(pudright.x, pudright.y, pudrightframex, 0, pudright.w, pudright.h);
+}
+
 void gCanvas::drawBall() {
 	shadowoffsetx = 10;
 	shadowoffsety = 10;
@@ -729,6 +759,7 @@ void gCanvas::drawBall() {
 	ballangle = calculateAngle(ball.velocityx, ball.velocityy);
 	ballimage.drawSub(ball.x - ball.radius, ball.y - ball.radius, ball.w, ball.h, ballframex, 0, ball.w, ball.h, ballangle);
 }
+
 void gCanvas::drawHit() {
 	hitw = ballhit.getWidth() / 6;
 	hith = ballhit.getHeight();
@@ -737,12 +768,7 @@ void gCanvas::drawHit() {
 		ballhit.drawSub(hitanimx - hitw / 2, hitanimy - hith / 2, hitframex, 0, hitw, hith);
 	}
 }
-void gCanvas::drawPuds() {
-    pudleftframex = pudanimframeleft * pudleft.w;
-    pudleftimage.drawSub(pudleft.x, pudleft.y, pudleftframex, 0, pudleft.w, pudleft.h);
-    pudrightframex = pudanimframeright * pudright.w;
-    pudrightimage.drawSub(pudright.x, pudright.y, pudrightframex, 0, pudright.w, pudright.h);
-}
+
 void gCanvas::drawGoal() {
 	goal[PLAYER_LEFT].draw(goalx[PLAYER_LEFT], goaly[PLAYER_LEFT], goalw[PLAYER_LEFT], goalh[PLAYER_LEFT], 180);
 	goal[PLAYER_RIGHT].draw(goalx[PLAYER_RIGHT], goaly[PLAYER_RIGHT], goalw[PLAYER_RIGHT], goalh[PLAYER_RIGHT]);
@@ -942,15 +968,15 @@ void gCanvas::updateBallPosition() {
 
 void gCanvas::updateHitAnimating() {
     if (ishitanimating) {
-           hitframetimer += hitframespeed;
-           if (hitframetimer >= 0.1f) {
-               hitframe = (hitframe + 1) % 6;
-               hitframetimer = 0.0f;
-               if (hitframe == 0) {
-                   ishitanimating = false;
-               }
-           }
-       }
+	   hitframetimer += hitframespeed;
+	   if (hitframetimer >= 0.1f) {
+		   hitframe = (hitframe + 1) % 6;
+		   hitframetimer = 0.0f;
+		   if (hitframe == 0) {
+			   ishitanimating = false;
+		   }
+	   }
+   }
 }
 
 void gCanvas::updatePudAnimating() {
@@ -1148,7 +1174,6 @@ void gCanvas::startBall() {
 }
 
 void gCanvas::resetBall() {
-	soundControl(musicvalue, SOUND_TYPE_ONHIT, SOUND_WHISTLE);
     ball.x = getWidth() / 2;
     ball.y = getHeight() / 2;
 
@@ -1162,7 +1187,8 @@ void gCanvas::resetBall() {
     savedballframetimer = 0;
     ismoving = false;
 }
-void gCanvas::resetGame(){
+
+void gCanvas::resetGame() {
 	pudright.x = 1125 - pudright.w;
 	pudright.y = (getHeight() - pudright.h) / 2;
 	pudright.velocityy = 0;
@@ -1283,7 +1309,7 @@ void gCanvas::closestSide(Ball &ball, Pud &pud) {
 }
 
 float gCanvas::calculateAngle(int velocityx, int velocityy) {
-	 if (velocityx == 0 && velocityy == 0) {
+	if (velocityx == 0 && velocityy == 0) {
 		return 0;
 	}
 
@@ -1320,6 +1346,7 @@ void gCanvas::waitEvent() {
 		waitnumber--;
 		if(waitnumber < 0) {
 			changeGameState(GAME_START);
+			soundControl(musicvalue, SOUND_TYPE_ONHIT, SOUND_WHISTLE);
 			toggleBallMovement();
 			waitnumber = WAIT_SECOND;
 			waitcounter = 0;
@@ -1371,18 +1398,16 @@ void gCanvas::soundControl(int musicvalue, int type, int sound) {
 	musicstate = musicvalue <= 0 ? true : false;
 
 	if(type == SOUND_TYPE_STARTING) {
-		if(root->music.isPlaying()) {
-			root->music.setVolume(volume);
-			root->music.play();
-			root->music.setPaused(musicstate);
-		}
+		root->music.setVolume(volume);
+		root->music.play();
+		root->music.setPaused(musicstate);
 	}
 	if(type == SOUND_TYPE_SLIDER) {
 		root->music.setVolume(volume);
 		if(!(root->music.isPlaying())) root->music.play();
 		root->music.setPaused(musicstate);
 	}
-	if(type == SOUND_TYPE_ONHIT && !musicstate) {
+	if(type == SOUND_TYPE_ONHIT) {
 		if(sound == SOUND_BUTTON) {
 			root->buttonsound.setVolume(volume);
 			root->buttonsound.play();
@@ -1391,20 +1416,36 @@ void gCanvas::soundControl(int musicvalue, int type, int sound) {
 			root->clicksound.setVolume(volume);
 			root->clicksound.play();
 		}
-		if(sound == SOUND_BALL_HIT) {
-			root->ballhitsound.setVolume(volume);
-			root->ballhitsound.play();
+		if(sound == SOUND_GOAL) {
+//			root->goalsound.setVolume(volume);
+//			root->goalsound.play();
+
+			int randomgoal = (int)gRandom(GOAL_SOUND_COUNT);
+
+			if(randomgoal == 1) {
+				root->goalsound1.setVolume(volume);
+				root->goalsound1.play();
+			}
+			else if(randomgoal == 2) {
+				root->goalsound2.setVolume(volume);
+				root->goalsound2.play();
+			}
+			else if(randomgoal == 3) {
+				root->goalsound3.setVolume(volume);
+				root->goalsound3.play();
+			}
 		}
 		if(sound == SOUND_WHISTLE) {
 			root->whistlesound.setVolume(volume);
 			root->whistlesound.play();
 		}
-		if(sound == SOUND_GOAL) {
-			root->goalsound.setVolume(volume);
-			root->goalsound.play();
+		if(sound == SOUND_BALL_HIT) {
+			root->ballhitsound.setVolume(volume);
+			root->ballhitsound.play();
 		}
 	}
 }
+
 
 void gCanvas::setupGame() {
 	gamestate = GAME_SELECT_MODE;
@@ -1459,4 +1500,11 @@ bool gCanvas::isColliding(Ball &ball, Pud &pud) {
 
     return (nextX - ball.radius < pudRight && nextX + ball.radius > pudLeft &&
             nextY - ball.radius < pudBottom && nextY + ball.radius > pudTop);
+}
+
+void gCanvas::changeDifficulty(int difficultyvalue) {
+	if(difficultyvalue >= 0 && difficultyvalue < 33) difficulty = 1;
+	if(difficultyvalue > 33 && difficultyvalue < 66) difficulty = 2;
+	if(difficultyvalue > 66 && difficultyvalue <= 100) difficulty = 3;
+
 }

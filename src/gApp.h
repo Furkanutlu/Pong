@@ -30,6 +30,9 @@ public:
 	gFmodSound ballhitsound;
 	gFmodSound whistlesound;
 	gFmodSound goalsound;
+	gFmodSound goalsound1;
+	gFmodSound goalsound2;
+	gFmodSound goalsound3;
 
 	gDatabase database;
 };
