@@ -53,9 +53,9 @@ void gCanvas::update() {
 void gCanvas::draw() {
 	//logo.draw((getWidth() - logo.getWidth()) / 2, (getHeight() - logo.getHeight()) / 2);
 	drawMap();
-	drawBall();
 	drawGoal();
 	drawPuds();
+	drawBall();
 	drawHit();
 	drawScore();
 	drawGoalPostsLight();
@@ -143,37 +143,6 @@ void gCanvas::mouseDragged(int x, int y, int button) {
 		}
 	}
 
-	// Pud Control
-	if(gamestate == GAME_START) {
-		if (button == MOUSEBUTTON_LEFT) {
-			currentmousey = y;
-			if (x < getWidth() / 2) {
-				pudleft.y = currentmousey - pudleft.h / 2;
-
-				pudleft.y = std::max(pudleft.y, 115.0f);
-				pudleft.y = std::min(pudleft.y, 600 - pudleft.h);
-
-				if (currentmousey != prevmouseyleft) {
-					pudleft.velocityy = currentmousey - prevmouseyleft;
-				} else {
-					pudleft.velocityy = 0;
-				}
-
-				prevmouseyleft = currentmousey;
-			} else {
-				pudright.y = currentmousey - pudright.h / 2;
-
-				pudright.y = std::max(pudright.y, 115.0f);
-				pudright.y = std::min(pudright.y, 600 - pudright.h);
-				if (currentmousey != prevmouseyright) {
-					pudright.velocityy = currentmousey - prevmouseyright;
-				} else {
-					pudright.velocityy = 0;
-				}
-				prevmouseyright = currentmousey;
-			}
-		}
-	}
 }
 
 void gCanvas::mousePressed(int x, int y, int button) {
@@ -250,7 +219,10 @@ void gCanvas::mouseReleased(int x, int y, int button) {
 	// Pause Button
 	if(gamestate != GAME_SELECT_MODE && gamestate != GAME_GOAL && gamestate != GAME_LOSE && gamestate != GAME_WIN && gamestate != GAME_WAIT) {
 		if(pausebutton.hold) {
-			if(gamestate != GAME_PAUSE) changeGameState(GAME_PAUSE);
+			if(gamestate != GAME_PAUSE){
+				changeGameState(GAME_PAUSE);
+				toggleBallMovement();
+			}
 			else changeGameState(GAME_WAIT);
 		}
 	}
@@ -319,8 +291,6 @@ void gCanvas::mouseReleased(int x, int y, int button) {
 					slider[i].x = sliderminx[i];
 					vibrationvalue = 0;
 				}
-
-				gLogi("Vibration Value ") << std::to_string(vibrationvalue);
 				updateSettingsDatabase("vibrationstate", vibrationvalue);
 			}
 		}
@@ -333,11 +303,6 @@ void gCanvas::mouseReleased(int x, int y, int button) {
 		changeGameState(GAME_PAUSE);
 	}
 
-	// Pud idk
-    if (button == MOUSEBUTTON_LEFT) {
-        pudleft.velocityy = 0;
-        pudright.velocityy = 0;
-    }
 
 	for(int i = 0; i < BUTTON_COUNT; i++) {
 		if(buttoncoordinategroup[i].hold) buttoncoordinategroup[i].hold = false;
@@ -464,11 +429,13 @@ void gCanvas::setupBall() {
 	ballhit.loadImage("futbolassets/ball_hit.png");
 
 	//baslangic
+
 	ball.w = ballimage.getWidth() / 6;
 	ball.h = ballimage.getHeight();
 	ball.x = getWidth() / 2;
 	ball.y = getHeight() / 2;
-	speed = 10.0f;
+	ball.radius = ball.h / 2;
+	speed = 8.0f;
 	maxspeed = 15.0f;
 
 	resetBall();
@@ -490,20 +457,21 @@ void gCanvas::setupPuds() {
 	score[PLAYER_RIGHT] = 0;
 	pudleftimage.loadImage("futbolassets/pud_left.png");
 	pudrightimage.loadImage("futbolassets/pud_right.png");
-
-	pudleft.w = pudleftimage.getWidth() / 5;
-	pudleft.h = pudleftimage.getHeight();
+	float pudratio = 0.7f;
+	pudleft.w = (pudleftimage.getWidth() / 5) * pudratio;
+	pudleft.h = (pudleftimage.getHeight()) * pudratio;
 	pudleft.x = 150;
 	pudleft.y = (getHeight() - pudleft.h) / 2;
 	pudleft.velocityy = 0;
 	pudanimationactiveleft = false;
 
-	pudright.w = pudrightimage.getWidth() / 5;
-	pudright.h = pudrightimage.getHeight();
+	pudright.w = (pudrightimage.getWidth() / 5) * pudratio;
+	pudright.h = (pudrightimage.getHeight()) * pudratio;
 	pudright.x = 1125 - pudright.w;
 	pudright.y = (getHeight() - pudright.h) / 2;
 	pudright.velocityy = 0;
 	pudanimationactiveright = false;
+
 }
 
 void gCanvas::setupScore() {
@@ -928,9 +896,11 @@ void gCanvas::updateBallPosition() {
 			 for (int i = 0; i < 2; i++) {
 				if (checkPostCollision(ball, goalpostleft[i])) {
 					reflectBall(ball, goalpostleft[i]);
+					checkPudCollision(ball, pudleft);
 				}
 				if (checkPostCollision(ball, goalpostright[i])) {
 					reflectBall(ball, goalpostright[i]);
+					checkPudCollision(ball, pudright);
 			    }
 			}
 		 } else {// map sinirlari
@@ -953,7 +923,7 @@ void gCanvas::updateBallPosition() {
 				     else if (ball.y + ball.radius >= gamelinelimity[1])
 				         ball.y = gamelinelimity[1] - ball.radius;
 			 }
-			 if(abs(ball.velocityy) > 15)
+			 if(abs(ball.velocityy) > 20)
 			 ball.velocityy *= 0.5;
 		 }
 
@@ -1062,26 +1032,30 @@ void gCanvas::updateBot() {
 
 void gCanvas::updatePudControl() {
     if (ismovingupleft) {
-        pudleft.y -= movespeed;
-        pudleft.y = std::max(pudleft.y, 115.0f);
-        checkPudCollision(ball, pudleft);
-    }
-    if (ismovingupright) {
-        pudright.y -= movespeed;
-        pudright.y = std::max(pudright.y, 115.0f);
-        checkPudCollision(ball, pudright);
+        pudleft.velocityy = -movespeed;
+    } else if (ismovingdownleft) {
+        pudleft.velocityy = movespeed;
+    } else {
+        pudleft.velocityy = 0;
     }
 
-    if (ismovingdownleft) {
-        pudleft.y += movespeed;
-        pudleft.y = std::min(pudleft.y, 600 - pudleft.h);
-        checkPudCollision(ball, pudright);
+    if (ismovingupright) {
+        pudright.velocityy = -movespeed;
+    } else if (ismovingdownright) {
+        pudright.velocityy = movespeed;
+    } else {
+        pudright.velocityy = 0;
     }
-    if (ismovingdownright) {
-        pudright.y += movespeed;
-        pudright.y = std::min(pudright.y, 600 - pudright.h);
-        checkPudCollision(ball, pudright);
-    }
+
+    pudleft.y += pudleft.velocityy;
+    pudright.y += pudright.velocityy;
+
+    pudleft.y = std::max(115.0f, std::min(pudleft.y, 600.0f - pudleft.h));
+
+    pudright.y = std::max(115.0f, std::min(pudright.y, 600.0f - pudright.h));
+
+    checkPudCollision(ball, pudleft);
+    checkPudCollision(ball, pudright);
 }
 
 void gCanvas::updateGoalPostsLight() {
@@ -1179,13 +1153,27 @@ void gCanvas::resetBall() {
     ball.y = getHeight() / 2;
 
     angle = gRandom(360) * (M_PI / 180);
-    savedvelocityx = cos(angle) * speed;
+    int randomdirectionx = (rand() % 2 == 0) ? -1 : 1;
+    savedvelocityx = randomdirectionx * speed;
     savedvelocityy = sin(angle) * speed;
     ball.velocityx = 0;
     ball.velocityy = 0;
     savedballframe = 0;
     savedballframetimer = 0;
     ismoving = false;
+}
+void gCanvas::resetGame(){
+	pudright.x = 1125 - pudright.w;
+	pudright.y = (getHeight() - pudright.h) / 2;
+	pudright.velocityy = 0;
+	pudleft.x = 150;
+	pudleft.y = (getHeight() - pudleft.h) / 2;
+	pudleft.velocityy = 0;
+
+	ismovingdownleft = false;
+	ismovingdownright = false;
+	ismovingupleft = false;
+	ismovingupright = false;
 }
 
 bool gCanvas::checkPostCollision(Ball& ball, Post& post) {
@@ -1239,10 +1227,10 @@ void gCanvas::startPudAnimation(int type) {
 
 void gCanvas::checkPudCollision(Ball& ball, Pud& pud) {
     if (isColliding(ball, pud)) {
-        float pudLeft = pud.x + ball.radius;
-        float pudRight = pud.x + pud.w - ball.radius;
-        float pudTop = pud.y + ball.radius;
-        float pudBottom = pud.y + pud.h - ball.radius;
+        float pudLeft = pud.x;
+        float pudRight = pud.x + pud.w;
+        float pudTop = pud.y;
+        float pudBottom = pud.y + pud.h;
 
         if (ball.x + ball.radius <= pudLeft) {
             reflect(ball.velocityx, ball.velocityy, -1, 0);
@@ -1260,8 +1248,7 @@ void gCanvas::checkPudCollision(Ball& ball, Pud& pud) {
             reflect(ball.velocityx, ball.velocityy, 0, 1);
             ball.y = pudBottom + ball.radius;
         }
-
-        ball.velocityy += pud.velocityy * 0.5f;
+        ball.velocityy += pud.velocityy;
     }
 }
 
@@ -1322,7 +1309,10 @@ void gCanvas::generateGoalPostsLight(int goalpostslightx, int goalpostslighty,
 }
 
 void gCanvas::waitEvent() {
-	if(pregamestate != GAME_PAUSE) resetBall();
+	if(pregamestate != GAME_PAUSE) {
+		resetBall();
+		resetGame();
+	}
 
 	waitcounter++;
 	if(waitcounter % 60 == 0) {
@@ -1462,10 +1452,10 @@ bool gCanvas::isColliding(Ball &ball, Pud &pud) {
     float nextX = ball.x + ball.velocityx;
     float nextY = ball.y + ball.velocityy;
 
-    float pudLeft = pud.x + ball.radius;
-    float pudRight = pud.x + pud.w - ball.radius;
-    float pudTop = pud.y + ball.radius;
-    float pudBottom = pud.y + pud.h - ball.radius;
+    float pudLeft = pud.x;
+    float pudRight = pud.x + pud.w;
+    float pudTop = pud.y;
+    float pudBottom = pud.y + pud.h;
 
     return (nextX - ball.radius < pudRight && nextX + ball.radius > pudLeft &&
             nextY - ball.radius < pudBottom && nextY + ball.radius > pudTop);

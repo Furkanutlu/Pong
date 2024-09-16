@@ -183,6 +183,7 @@ private:
 	 */
 	void startBall();
 	void resetBall();
+	void resetGame();
 	void startHitAnimation(float x, float y);
 	void startPudAnimation(int type);
 
