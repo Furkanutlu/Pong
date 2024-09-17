@@ -245,14 +245,12 @@ void gCanvas::mouseReleased(int x, int y, int button) {
 					buttoncoordinategroup[i].state = true;
 
 					soundControl(musicvalue, SOUND_TYPE_CLOSE);
-					changeGameState(GAME_SELECT_MODE);
-					resetAllGame();
+					resetAllGame(GAME_SELECT_MODE);
 				}
 				if(i == BUTTON_HOME) {
 					soundControl(musicvalue, SOUND_TYPE_CLOSE);
 
-					changeGameState(GAME_MENU);
-					resetAllGame();
+					resetAllGame(GAME_MENU);
 				}
 				if(i == BUTTON_OPTIONS) {
 					changeGameState(GAME_OPTIONS);
@@ -1237,29 +1235,32 @@ void gCanvas::resetGame() {
 	ismovingupright = false;
 }
 
-void gCanvas::resetAllGame() {
+void gCanvas::resetAllGame(int gamestate) {
 	resetBall();
-
-	pudright.x = 1125 - pudright.w;
-	pudright.y = (getHeight() - pudright.h) / 2;
-	pudright.velocityy = 0;
-	pudleft.x = 150;
-	pudleft.y = (getHeight() - pudleft.h) / 2;
-	pudleft.velocityy = 0;
-
-	ismovingdownleft = false;
-	ismovingdownright = false;
-	ismovingupleft = false;
-	ismovingupright = false;
+	resetGame();
 
 	score[PLAYER_LEFT] = 0;
 	score[PLAYER_RIGHT] = 0;
 
 	if(gamestate == GAME_MENU) gamemode = MODE_PVE;
-	else gamemode = MODE_NONE;
+	else;
 
 	selecttext[PLAYER_LEFT] = "Player vs Player";
 	selecttext[PLAYER_RIGHT] = "Player vs NPC";
+
+	if(gamestate == GAME_SELECT_MODE) {
+		changeGameState(GAME_SELECT_MODE);
+		gamemode = MODE_NONE;
+	}
+	if(gamestate == GAME_MENU) {
+		changeGameState(GAME_MENU);
+		gamemode = MODE_PVE;
+	}
+
+	isuserleft = false;
+	isuserright = false;
+
+	toggleBallMovement();
 }
 
 bool gCanvas::checkPostCollision(Ball& ball, Post& post) {

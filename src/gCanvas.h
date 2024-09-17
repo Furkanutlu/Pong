@@ -142,7 +142,7 @@ private:
 	void updateBot();
 	void updatePudControl();
 	void resetGame();
-	void resetAllGame();
+	void resetAllGame(int gamestate);
 
 	/**
 	 * Executes each GoalPostsLights object in the activeGoalPostsLights vector, runs their animation, and then erases them.
