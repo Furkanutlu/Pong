@@ -31,9 +31,13 @@ void gCanvas::setup() {
 	setupOptionsMenu();
 	setupGameEndPanel();
 	setupGameMode();
+	setupButtons();
+	setupLogo();
+
+	soundControl(musicvalue, SOUND_TYPE_STARTING);
 }
 void gCanvas::update() {
-	if(gamestate == GAME_START) {
+	if(gamestate == GAME_START || gamestate == GAME_MENU) {
 		updateBallPosition();
 		updateHitAnimating();
 		updatePudAnimating();
@@ -58,12 +62,15 @@ void gCanvas::draw() {
 	drawHit();
 	drawScore();
 	drawGoalPostsLight();
-	drawPauseMenu();
+	if(gamestate != GAME_MENU && pregamestate != GAME_MENU) drawPauseMenu();
 	if(gamestate == GAME_GOAL) drawGoalEvent();
 	if(gamestate == GAME_WAIT) drawWaitEvent();
 	if(gamestate == GAME_OPTIONS) drawOptionsMenu();
 	if(gamestate == GAME_SELECT_MODE) drawGameMode();
 	if(gamestate == GAME_LOSE || gamestate == GAME_WIN) drawGameEndPanel();
+
+	if(gamestate == GAME_MENU) drawButtons();
+	if(gamestate == GAME_MENU) drawLogo();
 	//gDrawRectangle(pudleft.x, pudleft.y + 10, pudleft.w, pudleft.h - 20, false);
 	//gDrawRectangle(gamelinelimitx[0], gamelinelimity[0], gamelinelimitx[1], gamelinelimity[1], true);
 	//gDrawRectangle(pudleft.x + 5, pudright.y + 6, pudright.w, pudright.h, false);
@@ -141,10 +148,10 @@ void gCanvas::mouseDragged(int x, int y, int button) {
 void gCanvas::mousePressed(int x, int y, int button) {
 //	gLogi("gCanvas") << "mousePressed" << ", x:" << x << ", y:" << y << ", b:" << button;
 	// Pause Button
-	if(gamestate != GAME_SELECT_MODE && gamestate != GAME_GOAL && gamestate != GAME_LOSE && gamestate != GAME_WIN && gamestate != GAME_WAIT) {
+	if(gamestate != GAME_SELECT_MODE && gamestate != GAME_GOAL && gamestate != GAME_LOSE && gamestate != GAME_WIN && gamestate != GAME_WAIT && gamestate != GAME_MENU && pregamestate != GAME_MENU) {
 		if(x > (pausebutton.x - (pausebutton.w * 1.25f)) && x < (pausebutton.x + pausebutton.w + (pausebutton.w * 1.25f)) && y > (pausebutton.y - (pausebutton.w * 1.25f)) && y < (pausebutton.y + pausebutton.h + (pausebutton.w * 1.25f))) {
 			pausebutton.hold = true;
-			soundControl(musicvalue, SOUND_TYPE_ONHIT, SOUND_CLICK);
+			soundControl(musicvalue, SOUND_TYPE_ONHIT, SOUND_BUTTON);
 		}
 	}
 	gDrawRectangle((pausebutton.x - (pausebutton.w * 1.25f)), (pausebutton.x + pausebutton.w + (pausebutton.w * 1.25f)), (pausebutton.y - (pausebutton.w * 1.25f)) , (pausebutton.y + pausebutton.h + (pausebutton.w * 1.25f)), true);
@@ -152,7 +159,7 @@ void gCanvas::mousePressed(int x, int y, int button) {
 	for(int i = 0; i < BUTTON_COUNT; i++) {
 		if(x > buttoncoordinategroup[i].x && x < (buttoncoordinategroup[i].x + buttoncoordinategroup[i].w) && y > buttoncoordinategroup[i].y && y < (buttoncoordinategroup[i].y + (buttoncoordinategroup[i].h / 2))) {
 			buttoncoordinategroup[i].hold = true;
-			soundControl(musicvalue, SOUND_TYPE_ONHIT, SOUND_CLICK);
+			soundControl(musicvalue, SOUND_TYPE_ONHIT, SOUND_BUTTON);
 		}
 	}
 
@@ -161,7 +168,7 @@ void gCanvas::mousePressed(int x, int y, int button) {
 		for(int i = 0; i < BUTTON_COUNT - 1; i++) {
 			if(x > (buttonendcoordinategroup[i].x + (buttonendcoordinategroup[i].w / 2)) && x < (((buttonendcoordinategroup[i].x + (buttonendcoordinategroup[i].w / 2))) + buttonendcoordinategroup[i].w) && y > (buttonendcoordinategroup[i].y + endboardheaderh) && y < ((buttonendcoordinategroup[i].y + endboardheaderh) + (buttonendcoordinategroup[i].h / 2))) {
 				buttonendcoordinategroup[i].hold = true;
-				soundControl(musicvalue, SOUND_TYPE_ONHIT, SOUND_CLICK);
+				soundControl(musicvalue, SOUND_TYPE_ONHIT, SOUND_BUTTON);
 			}
 		}
 	}
@@ -177,7 +184,7 @@ void gCanvas::mousePressed(int x, int y, int button) {
 	// Option button
 	if(x > opbutton[ACCEPT_BUTTON].x && x < (opbutton[ACCEPT_BUTTON].x + opbutton[ACCEPT_BUTTON].w) && y > opbutton[ACCEPT_BUTTON].y && y < (opbutton[ACCEPT_BUTTON].y + opbutton[ACCEPT_BUTTON].h)) {
 		opbutton[ACCEPT_BUTTON].state = true;
-		soundControl(musicvalue, SOUND_TYPE_ONHIT, SOUND_CLICK);
+		soundControl(musicvalue, SOUND_TYPE_ONHIT, SOUND_BUTTON);
 	}
 
 	// Mode panel button
@@ -185,7 +192,21 @@ void gCanvas::mousePressed(int x, int y, int button) {
 		for(int i = 0; i < maxplayernum; i++) {
 			if(gamestate == GAME_SELECT_MODE && x > modebutton[i].x && x < (modebutton[i].x + modebutton[i].w) && y > modebutton[i].y && y < (modebutton[i].y + modebutton[i].h / 2)) {
 				modebutton[i].hold = true;
-				soundControl(musicvalue, SOUND_TYPE_ONHIT, SOUND_CLICK);
+				soundControl(musicvalue, SOUND_TYPE_ONHIT, SOUND_BUTTON);
+			}
+		}
+	}
+
+	// Main menu buttons press
+	if(gamestate == GAME_MENU) {
+		for(int i = 0; i < BUTTON_COUNT; i++) {
+			if(gamestate == GAME_MENU) {
+				if(x > menubuttoncoordinategroup[i].x && x < (menubuttoncoordinategroup[i].x + menubuttoncoordinategroup[i].w) && y > menubuttoncoordinategroup[i].y && y < (menubuttoncoordinategroup[i].y + menubuttoncoordinategroup[i].h)) {
+					if(gamestate == GAME_MENU) {
+						menubuttoncoordinategroup[i].state = true;
+						soundControl(musicvalue, SOUND_TYPE_ONHIT, SOUND_BUTTON);
+					}
+				}
 			}
 		}
 	}
@@ -194,8 +215,19 @@ void gCanvas::mousePressed(int x, int y, int button) {
 void gCanvas::mouseReleased(int x, int y, int button) {
 //	gLogi("gCanvas") << "mouseReleased" << ", button:" << button;
 
+	// Main menu buttons release
+	if(menubuttoncoordinategroup[MENU_BUTTON_PLAY].state == true) {
+		menubuttoncoordinategroup[MENU_BUTTON_PLAY].state = false;
+		gamemode = MODE_NONE;
+		changeGameState(GAME_SELECT_MODE);
+	}
+	if(menubuttoncoordinategroup[MENU_BUTTON_OPTIONS].state == true) {
+		menubuttoncoordinategroup[MENU_BUTTON_OPTIONS].state = false;
+		changeGameState(GAME_OPTIONS);
+	}
+
 	// Pause Button
-	if(gamestate != GAME_SELECT_MODE && gamestate != GAME_GOAL && gamestate != GAME_LOSE && gamestate != GAME_WIN && gamestate != GAME_WAIT) {
+	if(gamestate != GAME_SELECT_MODE && gamestate != GAME_GOAL && gamestate != GAME_LOSE && gamestate != GAME_WIN && gamestate != GAME_WAIT && gamestate != GAME_MENU && pregamestate != GAME_MENU) {
 		if(pausebutton.hold) {
 			if(gamestate != GAME_PAUSE){
 				changeGameState(GAME_PAUSE);
@@ -213,15 +245,14 @@ void gCanvas::mouseReleased(int x, int y, int button) {
 					buttoncoordinategroup[i].state = true;
 
 					soundControl(musicvalue, SOUND_TYPE_CLOSE);
-
-					gCanvas* replay = new gCanvas(root);
-					appmanager->setCurrentCanvas(replay);
+					changeGameState(GAME_SELECT_MODE);
+					resetAllGame();
 				}
 				if(i == BUTTON_HOME) {
 					soundControl(musicvalue, SOUND_TYPE_CLOSE);
 
-					menuCanvas* main = new menuCanvas(root);
-					appmanager->setCurrentCanvas(main);
+					changeGameState(GAME_MENU);
+					resetAllGame();
 				}
 				if(i == BUTTON_OPTIONS) {
 					changeGameState(GAME_OPTIONS);
@@ -248,34 +279,36 @@ void gCanvas::mouseReleased(int x, int y, int button) {
 	}
 
 	// Slider release control
-	for(int i = 0; i < OPTIONS_COUNT; i++) {
-		if(sliderselected[i]) {
-			sliderselected[i] = false;
+	if(gamestate == GAME_OPTIONS) {
+		for(int i = 0; i < OPTIONS_COUNT; i++) {
+			if(sliderselected[i]) {
+				sliderselected[i] = false;
 
-			if(i == SLIDER_DIFFICULTY) {
-				// If you release the slider it will send its data to the database.
-				difficultyvalue = normalizeSlider(sliderminx[i], slidermaxx[i], slider[i].x);
-				changeDifficulty(difficultyvalue);
-				updateSettingsDatabase("difficultystate", difficultyvalue);
-			}
-			if(i == SLIDER_MUSIC) {
-				// If you release the slider it will send its data to the database.
-				musicvalue = normalizeSlider(sliderminx[i], slidermaxx[i], slider[i].x);
+				if(i == SLIDER_DIFFICULTY) {
+					// If you release the slider it will send its data to the database.
+					difficultyvalue = normalizeSlider(sliderminx[i], slidermaxx[i], slider[i].x);
+					changeDifficulty(difficultyvalue);
+					updateSettingsDatabase("difficultystate", difficultyvalue);
+				}
+				if(i == SLIDER_MUSIC) {
+					// If you release the slider it will send its data to the database.
+					musicvalue = normalizeSlider(sliderminx[i], slidermaxx[i], slider[i].x);
 
-				soundControl(musicvalue, SOUND_TYPE_SLIDER);
-				updateSettingsDatabase("musicstate", musicvalue);
-			}
-			if(i == SLIDER_VIBRATION) {
-				// If you release the slider it will check it and send its data to the database.
-				if(slider[i].x <= sliderminx[i]) {
-					slider[i].x = slidermaxx[i];
-					vibrationvalue = 1;
+					soundControl(musicvalue, SOUND_TYPE_SLIDER);
+					updateSettingsDatabase("musicstate", musicvalue);
 				}
-				else {
-					slider[i].x = sliderminx[i];
-					vibrationvalue = 0;
+				if(i == SLIDER_VIBRATION) {
+					// If you release the slider it will check it and send its data to the database.
+					if(slider[i].x <= sliderminx[i]) {
+						slider[i].x = slidermaxx[i];
+						vibrationvalue = 1;
+					}
+					else {
+						slider[i].x = sliderminx[i];
+						vibrationvalue = 0;
+					}
+					updateSettingsDatabase("vibrationstate", vibrationvalue);
 				}
-				updateSettingsDatabase("vibrationstate", vibrationvalue);
 			}
 		}
 	}
@@ -284,9 +317,10 @@ void gCanvas::mouseReleased(int x, int y, int button) {
 
 	if(gamestate == GAME_OPTIONS && opbutton[ACCEPT_BUTTON].state) {
 		opbutton[ACCEPT_BUTTON].state = false;
-		changeGameState(GAME_PAUSE);
-	}
 
+		if(pregamestate == GAME_MENU) changeGameState(GAME_MENU);
+		else changeGameState(GAME_PAUSE);
+	}
 
 	for(int i = 0; i < BUTTON_COUNT; i++) {
 		if(buttoncoordinategroup[i].hold) buttoncoordinategroup[i].hold = false;
@@ -353,6 +387,19 @@ void gCanvas::showNotify() {
 
 void gCanvas::hideNotify() {
 
+}
+
+void gCanvas::setupGame() {
+//	gamestate = GAME_SELECT_MODE;
+	gamestate = GAME_MENU;
+	gamemode = MODE_PVE;
+	difficulty = 1;
+    ismovingupleft = false;
+    ismovingdownleft = false;
+    ismovingupright = false;
+    ismovingdownright = false;
+	isuserleft = false;
+	isuserright = false;
 }
 
 void gCanvas::setupMap() {
@@ -453,6 +500,7 @@ void gCanvas::setupPuds() {
 	pudright.y = (getHeight() - pudright.h) / 2;
 	pudright.velocityy = 0;
 	pudanimationactiveright = false;
+	if(gamestate == GAME_MENU) toggleBallMovement();
 }
 
 void gCanvas::setupScore() {
@@ -1091,13 +1139,25 @@ float gCanvas::getBallSpeed() {
 	return sqrt(ball.velocityx * ball.velocityx + ball.velocityy * ball.velocityy);
 }
 void gCanvas::checkGoal() {
-	if (ball.x <= goalline[PLAYER_LEFT] - ball.radius) {
-		score[PLAYER_RIGHT]++;
-		goalEvent(PLAYER_LEFT);
+	if(gamestate != GAME_MENU) {
+		if (ball.x <= goalline[PLAYER_LEFT] - ball.radius) {
+			score[PLAYER_RIGHT]++;
+			goalEvent(PLAYER_LEFT);
+		}
+		if (ball.x >= goalline[PLAYER_RIGHT] + ball.radius) {
+			score[PLAYER_LEFT]++;
+			goalEvent(PLAYER_RIGHT);
+		}
 	}
-	if (ball.x >= goalline[PLAYER_RIGHT] + ball.radius) {
-		score[PLAYER_LEFT]++;
-		goalEvent(PLAYER_RIGHT);
+	else {
+		if (ball.x <= goalline[PLAYER_LEFT] - ball.radius) {
+			resetBall();
+			toggleBallMovement();
+		}
+		if (ball.x >= goalline[PLAYER_RIGHT] + ball.radius) {
+			resetBall();
+			toggleBallMovement();
+		}
 	}
 }
 
@@ -1146,6 +1206,31 @@ void gCanvas::resetGame() {
 	ismovingdownright = false;
 	ismovingupleft = false;
 	ismovingupright = false;
+}
+
+void gCanvas::resetAllGame() {
+	resetBall();
+
+	pudright.x = 1125 - pudright.w;
+	pudright.y = (getHeight() - pudright.h) / 2;
+	pudright.velocityy = 0;
+	pudleft.x = 150;
+	pudleft.y = (getHeight() - pudleft.h) / 2;
+	pudleft.velocityy = 0;
+
+	ismovingdownleft = false;
+	ismovingdownright = false;
+	ismovingupleft = false;
+	ismovingupright = false;
+
+	score[PLAYER_LEFT] = 0;
+	score[PLAYER_RIGHT] = 0;
+
+	if(gamestate == GAME_MENU) gamemode = MODE_PVE;
+	else gamemode = MODE_NONE;
+
+	selecttext[PLAYER_LEFT] = "Player vs Player";
+	selecttext[PLAYER_RIGHT] = "Player vs NPC";
 }
 
 bool gCanvas::checkPostCollision(Ball& ball, Post& post) {
@@ -1385,12 +1470,9 @@ void gCanvas::soundControl(int musicvalue, int type, int sound) {
 		}
 		if(sound == SOUND_CLICK) {
 			root->clicksound.setVolume(volume);
-			root->clicksound.play();
+			if(volume > 0) root->clicksound.play();
 		}
 		if(sound == SOUND_GOAL) {
-//			root->goalsound.setVolume(volume);
-//			root->goalsound.play();
-
 			int randomgoal = (int)gRandom(GOAL_SOUND_COUNT);
 
 			if(randomgoal == 1) {
@@ -1415,19 +1497,6 @@ void gCanvas::soundControl(int musicvalue, int type, int sound) {
 			root->ballhitsound.play();
 		}
 	}
-}
-
-
-void gCanvas::setupGame() {
-	gamestate = GAME_SELECT_MODE;
-	gamemode = MODE_NONE;
-	difficulty = 1;
-    ismovingupleft = false;
-    ismovingdownleft = false;
-    ismovingupright = false;
-    ismovingdownright = false;
-	isuserleft = false;
-	isuserright = false;
 }
 
 void gCanvas::changeGameState(int gamestate) {
@@ -1478,4 +1547,49 @@ void gCanvas::changeDifficulty(int difficultyvalue) {
 	if(difficultyvalue > 33 && difficultyvalue < 66) difficulty = 2;
 	if(difficultyvalue > 66 && difficultyvalue <= 100) difficulty = 3;
 
+}
+
+
+void gCanvas::setupButtons() {
+	button[MENU_BUTTON_PLAY].loadImage("futbolassets/btn_menu_h_start.png");
+//	button[MENU_BUTTON_OPTIONS].loadImage("futbolassets/btn_menu_h_options.png");
+	button[MENU_BUTTON_OPTIONS].loadImage("futbolassets/btn_menu_h_options2.png");
+
+	menubuttoncoordinategroup[MENU_BUTTON_PLAY].w = button[MENU_BUTTON_PLAY].getWidth() / 1.5f;
+	menubuttoncoordinategroup[MENU_BUTTON_PLAY].h = (button[MENU_BUTTON_PLAY].getHeight() / 3.0f);
+	menubuttoncoordinategroup[MENU_BUTTON_PLAY].sw = button[MENU_BUTTON_PLAY].getWidth();
+	menubuttoncoordinategroup[MENU_BUTTON_PLAY].sh = button[MENU_BUTTON_PLAY].getHeight() / BUTTON_FRAMES;
+	menubuttoncoordinategroup[MENU_BUTTON_PLAY].x = (getWidth() - menubuttoncoordinategroup[MENU_BUTTON_PLAY].w) / 2 - menubuttoncoordinategroup[MENU_BUTTON_PLAY].w;
+	menubuttoncoordinategroup[MENU_BUTTON_PLAY].y = (getHeight() - menubuttoncoordinategroup[MENU_BUTTON_PLAY].h) / 2.0f;
+	menubuttoncoordinategroup[MENU_BUTTON_PLAY].state = false;
+
+	menubuttoncoordinategroup[MENU_BUTTON_OPTIONS].w = menubuttoncoordinategroup[MENU_BUTTON_PLAY].w;
+	menubuttoncoordinategroup[MENU_BUTTON_OPTIONS].h = menubuttoncoordinategroup[MENU_BUTTON_PLAY].h;
+	menubuttoncoordinategroup[MENU_BUTTON_OPTIONS].sw = button[MENU_BUTTON_OPTIONS].getWidth();
+	menubuttoncoordinategroup[MENU_BUTTON_OPTIONS].sh = button[MENU_BUTTON_OPTIONS].getHeight() / BUTTON_FRAMES;
+	menubuttoncoordinategroup[MENU_BUTTON_OPTIONS].x = (getWidth() - menubuttoncoordinategroup[MENU_BUTTON_PLAY].w) / 2 + menubuttoncoordinategroup[MENU_BUTTON_PLAY].w;
+	menubuttoncoordinategroup[MENU_BUTTON_OPTIONS].y = menubuttoncoordinategroup[MENU_BUTTON_PLAY].y;
+	menubuttoncoordinategroup[MENU_BUTTON_OPTIONS].state = false;
+}
+void gCanvas::setupLogo() {
+	courtroof.loadImage("futbolassets/court_roof.png");
+	courtroofw = courtroof.getWidth();
+	courtroofh = courtroof.getHeight() / 1.25f;
+	courtroofx = (getWidth() - courtroofw) / 2;
+	courtroofy = 0;
+
+	logo.loadImage("futbolassets/logo.png");
+	logow = logo.getWidth() / 1.25f;
+	logoh = logo.getHeight() / 1.25f;
+	logox = (courtroofx + courtroofw) - (courtroofw + logow ) / 2;
+	logoy = courtroofy + (courtroofh / 7);
+}
+void gCanvas::drawButtons() {
+	for(int i = 0; i < BUTTON_COUNT; i++) {
+		button[i].drawSub(menubuttoncoordinategroup[i].x, menubuttoncoordinategroup[i].y, menubuttoncoordinategroup[i].w, menubuttoncoordinategroup[i].h, 0, menubuttoncoordinategroup[i].sh * menubuttoncoordinategroup[i].state, menubuttoncoordinategroup[i].sw, menubuttoncoordinategroup[i].sh);
+	}
+}
+void gCanvas::drawLogo() {
+	courtroof.draw(courtroofx, courtroofy, courtroofw, courtroofh);
+	logo.draw(logox, logoy, logow, logoh);
 }

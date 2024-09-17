@@ -23,11 +23,8 @@ gApp::~gApp() {
 void gApp::setup() {
 	// Change Canvas
 
-//	gCanvas* cnv = new gCanvas(this);
-//	appmanager->setCurrentCanvas(cnv);
-
-	menuCanvas* menu = new menuCanvas(this);
-	appmanager->setCurrentCanvas(menu);
+	gCanvas* cnv = new gCanvas(this);
+	appmanager->setCurrentCanvas(cnv);
 
 	// Load musics
 
