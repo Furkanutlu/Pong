@@ -1016,39 +1016,68 @@ void gCanvas::updatePudAnimating() {
 void gCanvas::updateBot() {
 	if (gamemode != MODE_PVE) return;
 
-
 	botspeed = minspeedbot + ((difficultyvalue / 100.0f) * (maxspeedbot - minspeedbot));
 	errormargin = maxerrormarginbot - ((difficultyvalue / 100.0f) * (maxerrormarginbot - minerrormarginbot));
 
 	ballinrightside = ball.x > getWidth() / 2;
 
+	if(!isuserleft && !isuserright) {
+		if(ballinrightside) {
+			botcentery = pudright.y + pudright.h / 2;
+			ballcentery = ball.y;
+			targety = ballcentery - pudright.h / 2;
+
+			if (ballcentery < pudright.y + errormargin) {
+				pudright.y -= botspeed;
+			} else if (ballcentery > pudright.y + pudright.h - errormargin) {
+				pudright.y += botspeed;
+			}
+
+			pudright.y = std::max(pudright.y, 115.0f);
+			pudright.y = std::min(pudright.y, 600 - pudright.h);
+		}
+		else {
+			botcentery = pudleft.y + pudleft.h / 2;
+			ballcentery = ball.y;
+			targety = ballcentery - pudleft.h / 2;
+			if (ballcentery < pudleft.y + errormargin) {
+				pudleft.y -= botspeed;
+			} else if (ballcentery > pudleft.y + pudleft.h - errormargin) {
+				pudleft.y += botspeed;
+			}
+
+			pudleft.y = std::max(pudleft.y, 115.0f);
+			pudleft.y = std::min(pudleft.y, 600 - pudleft.h);
+		}
+	}
+
 	if (isuserleft && !isuserright && ballinrightside) {
-				botcentery = pudright.y + pudright.h / 2;
-				ballcentery = ball.y;
-				targety = ballcentery - pudright.h / 2;
+		botcentery = pudright.y + pudright.h / 2;
+		ballcentery = ball.y;
+		targety = ballcentery - pudright.h / 2;
 
-				if (ballcentery < pudright.y + errormargin) {
-					pudright.y -= botspeed;
-				} else if (ballcentery > pudright.y + pudright.h - errormargin) {
-					pudright.y += botspeed;
-				}
+		if (ballcentery < pudright.y + errormargin) {
+			pudright.y -= botspeed;
+		} else if (ballcentery > pudright.y + pudright.h - errormargin) {
+			pudright.y += botspeed;
+		}
 
-				pudright.y = std::max(pudright.y, 115.0f);
-				pudright.y = std::min(pudright.y, 600 - pudright.h);
-			}
+		pudright.y = std::max(pudright.y, 115.0f);
+		pudright.y = std::min(pudright.y, 600 - pudright.h);
+	}
 	if (isuserright && !isuserleft && !ballinrightside) {
-				botcentery = pudleft.y + pudleft.h / 2;
-				ballcentery = ball.y;
-				targety = ballcentery - pudleft.h / 2;
-				if (ballcentery < pudleft.y + errormargin) {
-					pudleft.y -= botspeed;
-				} else if (ballcentery > pudleft.y + pudleft.h - errormargin) {
-					pudleft.y += botspeed;
-				}
+		botcentery = pudleft.y + pudleft.h / 2;
+		ballcentery = ball.y;
+		targety = ballcentery - pudleft.h / 2;
+		if (ballcentery < pudleft.y + errormargin) {
+			pudleft.y -= botspeed;
+		} else if (ballcentery > pudleft.y + pudleft.h - errormargin) {
+			pudleft.y += botspeed;
+		}
 
-				pudleft.y = std::max(pudleft.y, 115.0f);
-				pudleft.y = std::min(pudleft.y, 600 - pudleft.h);
-			}
+		pudleft.y = std::max(pudleft.y, 115.0f);
+		pudleft.y = std::min(pudleft.y, 600 - pudleft.h);
+	}
 }
 
 void gCanvas::updatePudControl() {
