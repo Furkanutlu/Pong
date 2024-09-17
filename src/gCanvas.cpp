@@ -7,7 +7,6 @@
 
 
 #include "gCanvas.h"
-#include "menuCanvas.h"
 
 
 gCanvas::gCanvas(gApp* root) : gBaseCanvas(root) {
@@ -265,12 +264,14 @@ void gCanvas::mouseReleased(int x, int y, int button) {
 			if(buttonendcoordinategroup[i].hold) {
 				if(i == BUTTON_REPLAY) {
 					buttoncoordinategroup[i].state = true;
-					gCanvas* replay = new gCanvas(root);
-					appmanager->setCurrentCanvas(replay);
+
+					soundControl(musicvalue, SOUND_TYPE_CLOSE);
+					resetAllGame(GAME_SELECT_MODE);
 				}
 				if(i == BUTTON_HOME) {
-					menuCanvas* main = new menuCanvas(root);
-					appmanager->setCurrentCanvas(main);
+
+					soundControl(musicvalue, SOUND_TYPE_CLOSE);
+					resetAllGame(GAME_MENU);
 				}
 			}
 		}

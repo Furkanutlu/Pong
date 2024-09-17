@@ -7,7 +7,6 @@
 
 #include "gApp.h"
 #include "gCanvas.h"
-#include "menuCanvas.h"
 
 
 gApp::gApp() {

@@ -13,8 +13,6 @@
 #include "gImage.h"
 #include <vector>
 #include <cmath>
-#include <chrono>
-#include <thread>
 
 
 class gCanvas : public gBaseCanvas {
